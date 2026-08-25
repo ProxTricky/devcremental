@@ -9,7 +9,9 @@
   let { id }: { id: GeneratorId } = $props();
 
   const view = $derived(gameStore.generatorView(id));
-  const flavor = $derived(GENERATOR_FLAVOR[id]);
+  const flavor = $derived(GENERATOR_FLAVOR[settings.locale][id]);
+  const label = $derived(GENERATOR_LABELS[settings.locale][id]);
+  const effect = $derived(GENERATOR_EFFECT[settings.locale][id]);
 
   /** Glyphe de pastille par générateur — choix d'iconographie ui-engineer
    * (§3.8 ne fixe pas les 3 glyphes réels), cohérent avec le registre
@@ -42,12 +44,12 @@
     <span class="gen-icon mono" aria-hidden="true">{ICON[id]}</span>
     <span class="gen-body">
       <span class="gen-header">
-        <span class="gen-name">{GENERATOR_LABELS[id]}</span>
+        <span class="gen-name">{label}</span>
         <span class="gen-owned mono">×{view.possedes}</span>
       </span>
       <p class="gen-flavor">{flavor.description}</p>
-      {#if GENERATOR_EFFECT[id]}
-        <p class="gen-effect">{GENERATOR_EFFECT[id]}</p>
+      {#if effect}
+        <p class="gen-effect">{effect}</p>
       {/if}
       <span class="gen-stats mono">
         <span class="gen-rate">+{formatNumber(view.production, settings.numberNotation)} LoC/s</span>

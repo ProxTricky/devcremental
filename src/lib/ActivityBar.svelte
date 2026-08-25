@@ -1,5 +1,7 @@
 <script lang="ts">
   import { gameStore } from "./gameStore.svelte";
+  import { settings } from "./settings.svelte";
+  import { UI_STRINGS } from "./uiStrings";
 
   /**
    * Zone 2 (visual-identity.md §3.5) : 4 entrées d'acte (2 verrouillées), bouton
@@ -10,6 +12,7 @@
   const acte = $derived(gameStore.state.acte);
   const rewriteAvailable = $derived(acte >= 2);
   const workerLive = $derived(gameStore.clockNow - gameStore.lastTickAt <= 1000);
+  const t = $derived(UI_STRINGS[settings.locale].activityBar);
 
   interface ActeEntry {
     glyph: string;
@@ -18,18 +21,18 @@
   }
 
   const entries = $derived.by((): ActeEntry[] => [
-    { glyph: "◱", label: "acte i — solo dev", state: acte === 1 ? "active" : "available" },
+    { glyph: "◱", label: t.acte1, state: acte === 1 ? "active" : "available" },
     {
       glyph: "⑂",
-      label: "acte ii — open source",
+      label: t.acte2,
       state: acte >= 2 ? "active" : acte === 1 ? "locked" : "available",
     },
-    { glyph: "◈", label: "actes iii–iv — verrouillés", state: "locked" },
-    { glyph: "⌬", label: "acte v — verrouillé", state: "locked" },
+    { glyph: "◈", label: t.actesIIIIV, state: "locked" },
+    { glyph: "⌬", label: t.acteV, state: "locked" },
   ]);
 </script>
 
-<nav class="activitybar" aria-label="Actes">
+<nav class="activitybar" aria-label={t.ariaActes}>
   {#each entries as entry, i (i)}
     {#if entry.state === "locked"}
       <button
@@ -37,7 +40,7 @@
         class="act-btn locked"
         aria-disabled="true"
         tabindex="-1"
-        title="verrouillé"
+        title={t.locked}
         aria-label={entry.label}
       >
         <span aria-hidden="true">{entry.glyph}</span>
@@ -63,7 +66,7 @@
     class="rewrite-btn"
     disabled={!rewriteAvailable}
     aria-disabled={!rewriteAvailable}
-    title={rewriteAvailable ? "grand rewrite" : "grand rewrite — indisponible"}
+    title={rewriteAvailable ? t.grandRewrite : t.grandRewriteUnavailable}
     onclick={() => rewriteAvailable && onOpenRewrite()}
   >
     <span aria-hidden="true">⟳</span>
@@ -72,7 +75,7 @@
     class="status-dot"
     class:warn={!workerLive}
     aria-hidden="true"
-    title={workerLive ? "worker actif" : "worker inactif"}
+    title={workerLive ? t.workerActive : t.workerInactive}
   ></span>
 </nav>
 

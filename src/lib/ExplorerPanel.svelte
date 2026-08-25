@@ -6,6 +6,7 @@
   import { GENERATOR_LABELS } from "./generatorLabels";
   import { settings } from "./settings.svelte";
   import { LANGUE_FILE_NAME } from "./langueLabels";
+  import { UI_STRINGS } from "./uiStrings";
 
   /**
    * Zone 3 (visual-identity.md §3.6) : arbre de fichiers dérivé du state réel +
@@ -36,8 +37,13 @@
   );
 
   const openSourceFlavor = $derived(
-    publicationOpenSourceFlavor(formatNumber(gameStore.state.stars, settings.numberNotation)),
+    publicationOpenSourceFlavor(
+      settings.locale,
+      formatNumber(gameStore.state.stars, settings.numberNotation),
+    ),
   );
+  const t = $derived(UI_STRINGS[settings.locale].explorerPanel);
+  const generatorLabels = $derived(GENERATOR_LABELS[settings.locale]);
 
   // Grand Rewrite disponible dès acte >= 2, sans autre seuil (engine/actions.ts
   // `grandRewrite`) : avant l'Acte II, la seule "progression vers le seuil"
@@ -46,7 +52,7 @@
   const rewriteProgress = $derived(rewriteAvailable ? 100 : actProgress);
 </script>
 
-<aside class="explorer" aria-label="Explorateur de fichiers">
+<aside class="explorer" aria-label={t.ariaExplorer}>
   <h2 class="section-title panel-title">Explorer</h2>
 
   <div class="tree mono">
@@ -69,24 +75,23 @@
   </div>
 
   <div class="card objectives-card">
-    <h3 class="section-title">Objectifs</h3>
+    <h3 class="section-title">{t.objectives}</h3>
     {#if nextLockedGenerator}
-      <p class="card-label">Prochain déblocage : {GENERATOR_LABELS[nextLockedGenerator]}</p>
+      <p class="card-label">{t.nextUnlock(generatorLabels[nextLockedGenerator])}</p>
       <div
         class="bar-track objectives-track"
         role="progressbar"
         aria-valuenow={Math.round(nextUnlockProgress)}
         aria-valuemin="0"
         aria-valuemax="100"
-        aria-label="Progression vers {GENERATOR_LABELS[nextLockedGenerator]}"
+        aria-label={t.progressTowards(generatorLabels[nextLockedGenerator])}
       >
         <div class="bar-fill add" aria-hidden="true" style="width: {nextUnlockProgress}%"></div>
       </div>
       <p class="card-pct mono">{Math.round(nextUnlockProgress)} %</p>
     {:else if gameStore.state.acte === 1}
       <p class="card-label">
-        Fin de l'Acte I : {formatNumber(gameStore.state.locTotal, settings.numberNotation)} / {SEUIL_FIN_ACTE_1}
-        LoC
+        {t.endOfAct1(formatNumber(gameStore.state.locTotal, settings.numberNotation), SEUIL_FIN_ACTE_1)}
       </p>
       <div
         class="bar-track objectives-track"
@@ -94,7 +99,7 @@
         aria-valuenow={Math.round(actProgress)}
         aria-valuemin="0"
         aria-valuemax="100"
-        aria-label="Progression vers la fin de l'Acte I"
+        aria-label={t.progressEndAct1}
       >
         <div class="bar-fill add" aria-hidden="true" style="width: {actProgress}%"></div>
       </div>
@@ -113,11 +118,11 @@
         aria-valuenow="100"
         aria-valuemin="0"
         aria-valuemax="100"
-        aria-label="Grand Rewrite disponible"
+        aria-label={t.grandRewriteAvailableAria}
       >
         <div class="bar-fill meta" aria-hidden="true" style="width: 100%"></div>
       </div>
-      <p class="card-hint">disponible — cliquer pour ouvrir</p>
+      <p class="card-hint">{t.grandRewriteClickHint}</p>
     </button>
   {:else}
     <div class="card rewrite-card readonly">
@@ -128,11 +133,11 @@
         aria-valuenow={Math.round(rewriteProgress)}
         aria-valuemin="0"
         aria-valuemax="100"
-        aria-label="Progression vers le Grand Rewrite"
+        aria-label={t.progressTowardsRewrite}
       >
         <div class="bar-fill meta" aria-hidden="true" style="width: {rewriteProgress}%"></div>
       </div>
-      <p class="card-hint">disponible dès l'Acte II</p>
+      <p class="card-hint">{t.availableFromAct2}</p>
     </div>
   {/if}
 </aside>

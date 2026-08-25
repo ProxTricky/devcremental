@@ -15,21 +15,21 @@ describe("nextTerminalLine — révélation d'une fonction ligne par ligne", () 
         .flat(),
     );
     for (let i = 0; i < 20; i++) {
-      const { text } = nextTerminalLine(initialTerminalCursor(), "none");
+      const { text } = nextTerminalLine(initialTerminalCursor(), "none", "fr");
       expect(jokeTexts.has(text)).toBe(false);
     }
   });
 
   it("après la blague d'ouverture, les appels suivants révèlent une fonction réelle ligne par ligne, dans l'ordre", () => {
     let cursor = initialTerminalCursor();
-    const first = nextTerminalLine(cursor, "rust");
+    const first = nextTerminalLine(cursor, "rust", "fr");
     cursor = first.cursor;
     expect(cursor.pool).not.toBeNull();
     const fn = cursor.pool!;
 
     const revealed: string[] = [];
     for (let i = 0; i < fn.length; i++) {
-      const { text, cursor: next } = nextTerminalLine(cursor, "rust");
+      const { text, cursor: next } = nextTerminalLine(cursor, "rust", "fr");
       revealed.push(text);
       cursor = next;
     }
@@ -39,19 +39,19 @@ describe("nextTerminalLine — révélation d'une fonction ligne par ligne", () 
 
   it("le clic qui suit la dernière ligne d'une fonction renvoie une blague, puis une nouvelle fonction démarre", () => {
     let cursor = initialTerminalCursor();
-    ({ cursor } = nextTerminalLine(cursor, "python")); // blague d'ouverture -> pool posé
+    ({ cursor } = nextTerminalLine(cursor, "python", "fr")); // blague d'ouverture -> pool posé
     const fnLength = cursor.pool!.length;
 
     // Épuise la fonction en cours.
     for (let i = 0; i < fnLength; i++) {
-      ({ cursor } = nextTerminalLine(cursor, "python"));
+      ({ cursor } = nextTerminalLine(cursor, "python", "fr"));
     }
     expect(cursor.pool).toBeNull(); // fonction terminée -> prochain appel = blague
 
     const jokeTexts = new Set(
       Object.values(CODE_SAMPLES).flat().flat(),
     );
-    const afterFn = nextTerminalLine(cursor, "python");
+    const afterFn = nextTerminalLine(cursor, "python", "fr");
     expect(jokeTexts.has(afterFn.text)).toBe(false); // c'est bien une blague, pas une ligne de code
     expect(afterFn.cursor.pool).not.toBeNull(); // une nouvelle fonction a été tirée dans la foulée
   });
@@ -66,6 +66,14 @@ describe("nextTerminalLine — révélation d'une fonction ligne par ligne", () 
       for (const fn of functions) {
         expect(fn.length, `fonction vide dans le pool ${langue}`).toBeGreaterThan(0);
       }
+    }
+  });
+
+  it("la locale 'en' pioche aussi une blague (pas une ligne de fonction) au premier appel", () => {
+    const jokeTexts = new Set(Object.values(CODE_SAMPLES).flat().flat());
+    for (let i = 0; i < 20; i++) {
+      const { text } = nextTerminalLine(initialTerminalCursor(), "none", "en");
+      expect(jokeTexts.has(text)).toBe(false);
     }
   });
 });

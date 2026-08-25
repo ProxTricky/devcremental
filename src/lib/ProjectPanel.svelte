@@ -6,6 +6,8 @@
   import GeneratorCard from "./GeneratorCard.svelte";
   import NpmInstallClaim from "./NpmInstallClaim.svelte";
   import RefactorButton from "./RefactorButton.svelte";
+  import { settings } from "./settings.svelte";
+  import { UI_STRINGS } from "./uiStrings";
   import UpgradeCard from "./UpgradeCard.svelte";
 
   /**
@@ -25,10 +27,11 @@
     UPGRADE_IDS.some((id) => isUpgradeUnlocked(id, gameStore.state.locTotal)) ||
       acte2,
   );
+  const t = $derived(UI_STRINGS[settings.locale].projectPanel);
 </script>
 
-<aside class="project-panel" aria-label="Générateurs et dette technique">
-  <h2 class="section-title panel-title">Générateurs</h2>
+<aside class="project-panel" aria-label={t.ariaLabel}>
+  <h2 class="section-title panel-title">{t.generators}</h2>
 
   <div class="generator-list">
     {#each GENERATOR_IDS as id (id)}
@@ -38,7 +41,7 @@
 
   {#if upgradesVisible}
     <div class="upgrades-block">
-      <h2 class="section-title">Améliorations</h2>
+      <h2 class="section-title">{t.upgrades}</h2>
       <div class="upgrades-list">
         {#each UPGRADE_IDS as id (id)}
           <UpgradeCard {id} />
@@ -50,7 +53,7 @@
 
   {#if acte2}
     <div class="debt-block">
-      <h2 class="section-title">Dette technique</h2>
+      <h2 class="section-title">{t.technicalDebt}</h2>
       <DebtIndicator />
       <RefactorButton />
     </div>

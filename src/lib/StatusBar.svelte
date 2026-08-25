@@ -4,6 +4,7 @@
   import { formatNumber } from "./format";
   import { AUTOSAVE_INTERVAL_MS, gameStore } from "./gameStore.svelte";
   import { settings } from "./settings.svelte";
+  import { UI_STRINGS } from "./uiStrings";
 
   /** Zone 6 (visual-identity.md §3.9) : 8 segments, tous dérivés du state réel
    * ou des horodatages UI-only du store (§gameStore.svelte.ts). */
@@ -41,6 +42,7 @@
   }
 
   const runTime = $derived(formatRunTime(gameStore.clockNow - gameStore.runStartAt));
+  const t = $derived(UI_STRINGS[settings.locale].statusBar);
 </script>
 
 <footer class="statusbar mono">
@@ -50,13 +52,13 @@
   <span class="segment fg3">autosave {autosaveSecondsLeft}s</span>
   {#if acte2}
     <span class="segment" class:warn={tier === "warn"} class:error={tier === "error"}>
-      dette −{pctPerdu} %
+      {t.debt} −{pctPerdu} %
     </span>
   {/if}
   {#if bugsCount >= 1}
     <span class="segment del">bugs {bugsCount}</span>
   {/if}
-  <span class="segment fg2">acte {acteRoman}</span>
+  <span class="segment fg2">{t.act} {acteRoman}</span>
   <span class="segment" class:warn={buffActive}>
     ☕ {stockAvailable}/{CAFE_MAX_STOCK}{#if buffActive}
       · {buffSecondsLeft}s{/if}

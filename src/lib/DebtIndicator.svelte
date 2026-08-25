@@ -1,6 +1,8 @@
 <script lang="ts">
   import { detteDivisor } from "../engine/formulas";
   import { gameStore } from "./gameStore.svelte";
+  import { settings } from "./settings.svelte";
+  import { UI_STRINGS } from "./uiStrings";
 
   // dette-technique-grand-rewrite.md §1.3 : le joueur doit RESSENTIR l'effet de
   // la dette, pas juste voir un nombre monter. `ratioPerdu` est dérivé de la
@@ -22,6 +24,7 @@
     ratioPerdu >= 0.5 ? "error" : ratioPerdu >= 0.2 ? "warn" : "info",
   );
   const MARKER: Record<Tier, string> = { info: "~", warn: "!", error: "−" };
+  const ariaLabel = $derived(UI_STRINGS[settings.locale].debtIndicator.ariaLabel);
 </script>
 
 <div class="debt-row">
@@ -31,7 +34,7 @@
     aria-valuenow={pctPerdu}
     aria-valuemin="0"
     aria-valuemax="100"
-    aria-label="Production perdue à cause de la dette technique"
+    aria-label={ariaLabel}
   >
     <div class="bar-fill debt" aria-hidden="true" style="width: {pctPerdu}%"></div>
   </div>

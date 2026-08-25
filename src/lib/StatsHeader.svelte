@@ -5,6 +5,7 @@
   import { formatNumber } from "./format";
   import { gameStore } from "./gameStore.svelte";
   import { settings } from "./settings.svelte";
+  import { UI_STRINGS } from "./uiStrings";
 
   /**
    * Zone 4b (visual-identity.md §3.7 4b) : LOC / NET-SEC / BUGS ou STARS selon
@@ -39,6 +40,7 @@
   const detteLossPct = $derived(
     Math.round((1 - debtDivisorValue.pow(-1).toNumber()) * 100),
   );
+  const t = $derived(UI_STRINGS[settings.locale].statsHeader);
 </script>
 
 <div class="stats-header">
@@ -52,18 +54,18 @@
     <span class="stat-value mono">+{formatNumber(netRate, settings.numberNotation)}</span>
     {#if acte2 && detteLossPct > 0}
       <span class="stat-subline mono">
-        brut {formatNumber(brutRate, settings.numberNotation)} · <span class="del-text"
-          >−{detteLossPct} % dette</span
+        {t.raw} {formatNumber(brutRate, settings.numberNotation)} · <span class="del-text"
+          >−{detteLossPct} % {t.debt}</span
         >
       </span>
     {:else}
-      <span class="stat-subline mono">brut {formatNumber(brutRate, settings.numberNotation)}</span>
+      <span class="stat-subline mono">{t.raw} {formatNumber(brutRate, settings.numberNotation)}</span>
     {/if}
   </div>
 
   {#if !acte2}
     <div class="stat-block">
-      <span class="section-title">Bugs ouverts</span>
+      <span class="section-title">{t.openBugs}</span>
       <span class="stat-value mono" class:del-text={bugsCount >= 1}>{bugsCount}</span>
     </div>
   {:else}

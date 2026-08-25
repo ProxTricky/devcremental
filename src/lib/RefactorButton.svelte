@@ -1,6 +1,8 @@
 <script lang="ts">
   import { gameStore } from "./gameStore.svelte";
   import { REFACTOR_FLAVOR, REFACTOR_FLAVOR_NAME } from "./flavorText";
+  import { settings } from "./settings.svelte";
+  import { UI_STRINGS } from "./uiStrings";
 
   // dette-technique-grand-rewrite.md §2.1 : action à MAINTENIR, pas un clic
   // instantané. `pressed` est un état purement local (feedback immédiat) ; la
@@ -31,6 +33,10 @@
     if (e.key !== "Enter" && e.key !== " ") return;
     stop();
   }
+
+  const flavor = $derived(REFACTOR_FLAVOR[settings.locale]);
+  const flavorName = $derived(REFACTOR_FLAVOR_NAME[settings.locale]);
+  const inProgressSuffix = $derived(UI_STRINGS[settings.locale].refactorButton.inProgressSuffix);
 </script>
 
 <div class="refactor-wrapper">
@@ -40,7 +46,7 @@
     class="refactor-button"
     class:active={pressed}
     aria-pressed={pressed}
-    title={REFACTOR_FLAVOR.tooltip}
+    title={flavor.tooltip}
     onmousedown={start}
     onmouseup={stop}
     onmouseleave={stop}
@@ -56,10 +62,10 @@
          barre de dette juste au-dessus en tient déjà lieu. -->
     <span class="refactor-glyph mono" aria-hidden="true">{pressed ? "!" : "~"}</span>
     <span class="refactor-label mono"
-      >{REFACTOR_FLAVOR_NAME}{pressed ? " — en cours…" : ""}</span
+      >{flavorName}{pressed ? inProgressSuffix : ""}</span
     >
   </button>
-  <p class="refactor-flavor">{REFACTOR_FLAVOR.description}</p>
+  <p class="refactor-flavor">{flavor.description}</p>
 </div>
 
 <style>

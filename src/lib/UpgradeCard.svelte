@@ -4,12 +4,16 @@
   import { formatNumber } from "./format";
   import { gameStore } from "./gameStore.svelte";
   import { settings } from "./settings.svelte";
+  import { UI_STRINGS } from "./uiStrings";
   import { UPGRADE_EFFECT, UPGRADE_LABELS } from "./upgradeLabels";
 
   let { id }: { id: UpgradeId } = $props();
 
   const view = $derived(gameStore.upgradeView(id));
-  const flavor = $derived(UPGRADE_FLAVOR[id]);
+  const flavor = $derived(UPGRADE_FLAVOR[settings.locale][id]);
+  const label = $derived(UPGRADE_LABELS[settings.locale][id]);
+  const effect = $derived(UPGRADE_EFFECT[settings.locale][id]);
+  const t = $derived(UI_STRINGS[settings.locale].upgradeCard);
 
   /** Glyphe de pastille par upgrade — même registre géométrique que les
    * icônes de générateurs (GeneratorCard) et d'activity bar, choix
@@ -44,13 +48,13 @@
     <span class="up-icon mono" aria-hidden="true">{ICON[id]}</span>
     <span class="up-body">
       <span class="up-header">
-        <span class="up-name">{UPGRADE_LABELS[id]}</span>
+        <span class="up-name">{label}</span>
         {#if view.owned}
-          <span class="up-owned mono"><span aria-hidden="true">✔</span> possédée</span>
+          <span class="up-owned mono"><span aria-hidden="true">✔</span> {t.owned}</span>
         {/if}
       </span>
       <p class="up-flavor">{flavor.description}</p>
-      <p class="up-effect">{UPGRADE_EFFECT[id]}</p>
+      <p class="up-effect">{effect}</p>
       {#if !view.owned}
         <span class="up-stats mono">
           <span class="up-cost">{formatNumber(view.cost, settings.numberNotation)} LoC</span>

@@ -24,6 +24,8 @@ import {
 } from "../save/localStorage";
 import { decodeSave, encodeSave, SAVE_KEY } from "../save/save";
 import type { InboundMessage, OutboundMessage } from "../worker/protocol";
+import { settings } from "./settings.svelte";
+import { UI_STRINGS } from "./uiStrings";
 
 export const AUTOSAVE_INTERVAL_MS = 30_000;
 /** Fréquence de rafraîchissement de `clockNow` (§3.9 : compte à rebours
@@ -169,7 +171,7 @@ class GameStore {
     // d'une save déjà en Acte II) — ce n'est pas une transition qui vient de se
     // produire, juste l'état initial.
     if (this.#initialized && previousActe === 1 && decoded.acte === 2) {
-      this.#pushLog("transition — Acte II : open source. Le repo est public.");
+      this.#pushLog(UI_STRINGS[settings.locale].gameStore.actTwoTransition);
     }
   }
 
@@ -185,14 +187,18 @@ class GameStore {
         // `beforeunload` ne se déclenche jamais.
         saveLastActiveAt();
         this.lastAutosaveAt = Date.now();
-        this.#pushLog("sauvegarde effectuée");
+        this.#pushLog(UI_STRINGS[settings.locale].gameStore.saveDone);
         break;
       case "loadError":
         // Sauvegarde locale corrompue/illisible : on continue sur l'état courant
         // plutôt que de bloquer le joueur, cf. localStorage.ts (pas de retry ici,
         // c'est un event isolé sur un import explicite).
         console.error("[devcremental] échec de chargement de sauvegarde:", msg.message);
-        this.#pushLog(`échec de chargement de sauvegarde : ${msg.message}`, "error");
+        // Le message d'erreur lui-même (`msg.message`) vient de src/save/save.ts,
+        // hors scope de cette passe i18n (CLAUDE.md — pas de formule/message
+        // moteur retouché ici) : reste en français quelle que soit la locale,
+        // seul le préfixe traduit.
+        this.#pushLog(`${UI_STRINGS[settings.locale].gameStore.loadErrorPrefix}${msg.message}`, "error");
         break;
     }
   }
@@ -229,7 +235,7 @@ class GameStore {
   triggerGrandRewrite(langue: LangueId): void {
     this.#post({ type: "grandRewrite", langue });
     this.runStartAt = Date.now();
-    this.#pushLog(`grand rewrite — nouvelle run en ${langue}`);
+    this.#pushLog(UI_STRINGS[settings.locale].gameStore.grandRewriteLog(langue));
   }
 
   /** Upgrades-acte-1-2.md §2 : achat en LoC d'une des 3 upgrades U1-U3.
@@ -269,7 +275,7 @@ class GameStore {
     if (typeof window !== "undefined") {
       window.localStorage.removeItem(SAVE_KEY);
     }
-    this.#pushLog("partie réinitialisée");
+    this.#pushLog(UI_STRINGS[settings.locale].gameStore.gameReset);
   }
 
   /** Vue d'un générateur pour l'affichage — cf. GeneratorView ci-dessus. */

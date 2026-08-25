@@ -10,6 +10,7 @@
   import StatusBar from "./lib/StatusBar.svelte";
   import TabBar from "./lib/TabBar.svelte";
   import TitleBar from "./lib/TitleBar.svelte";
+  import { UI_STRINGS } from "./lib/uiStrings";
 
   /**
    * Workbench d'éditeur plein écran (visual-identity.md §3) : châssis
@@ -24,9 +25,16 @@
   function openRewrite() {
     rewriteOpen = true;
   }
+
+  // i18n.ts (demande user du 2026-08-25) : synchronise l'attribut `lang` du
+  // document avec la langue choisie/détectée — figé à "fr" dans index.html
+  // jusqu'ici, faux dès que le joueur bascule en anglais.
+  $effect(() => {
+    document.documentElement.lang = settings.locale;
+  });
 </script>
 
-<a href="#main-content" class="skip-link">aller au jeu</a>
+<a href="#main-content" class="skip-link">{UI_STRINGS[settings.locale].skipLink}</a>
 
 <div class="app-shell" class:reduce-motion={settings.reduceMotion}>
   <TitleBar onOpenRewrite={openRewrite} />

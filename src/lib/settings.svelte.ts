@@ -1,4 +1,5 @@
 import type { NumberNotation } from "./format";
+import { detectLocale, isLocale, type Locale } from "./i18n";
 
 /**
  * Préférences d'affichage (thread principal uniquement, jamais dans la save de
@@ -15,6 +16,9 @@ const VALID_NOTATIONS: readonly NumberNotation[] = [
   "scientific",
   "hex",
 ];
+
+/** i18n.ts : langue de l'interface, détectée une fois puis persistée. */
+const LOCALE_KEY = "devcremental-locale";
 
 function prefersReducedMotion(): boolean {
   return (
@@ -41,9 +45,18 @@ function loadNumberNotation(): NumberNotation {
     : "integer";
 }
 
+function loadLocale(): Locale {
+  if (typeof window === "undefined") return "en";
+  const stored = window.localStorage.getItem(LOCALE_KEY);
+  // Valeur absente/corrompue → détection navigateur (1er lancement), jamais
+  // d'exception — même garde-fou que loadNumberNotation ci-dessus.
+  return isLocale(stored) ? stored : detectLocale();
+}
+
 class Settings {
   reduceMotion = $state(loadReduceMotion());
   numberNotation: NumberNotation = $state(loadNumberNotation());
+  locale: Locale = $state(loadLocale());
 
   toggleReduceMotion(): void {
     this.reduceMotion = !this.reduceMotion;
@@ -53,6 +66,11 @@ class Settings {
   setNumberNotation(next: NumberNotation): void {
     this.numberNotation = next;
     window.localStorage.setItem(NUMBER_NOTATION_KEY, next);
+  }
+
+  setLocale(next: Locale): void {
+    this.locale = next;
+    window.localStorage.setItem(LOCALE_KEY, next);
   }
 }
 

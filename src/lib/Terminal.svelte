@@ -34,7 +34,7 @@
     // effet dépendant de sa propre écriture -> boucle infinie (Svelte 5, cf.
     // effect_update_depth_exceeded observé en test manuel).
     untrack(() => {
-      const result = nextTerminalLine(cursor, gameStore.state.langueActive);
+      const result = nextTerminalLine(cursor, gameStore.state.langueActive, settings.locale);
       cursor = result.cursor;
       lines.push({
         id: nextId++,

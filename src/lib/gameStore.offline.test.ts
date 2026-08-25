@@ -69,8 +69,16 @@ async function freshGameStore(opts: {
   (globalThis as { localStorage?: unknown }).localStorage = storage;
 
   if (opts.withWindow) {
-    const target = new EventTarget() as EventTarget & { localStorage: FakeStorage };
+    const target = new EventTarget() as EventTarget & {
+      localStorage: FakeStorage;
+      matchMedia: (query: string) => { matches: boolean };
+    };
     target.localStorage = storage;
+    // settings.svelte.ts (import transitif de gameStore.svelte.ts depuis la
+    // passe i18n du 2026-08-25) lit `window.matchMedia` dès l'instanciation du
+    // singleton `settings` — absent de ce mock minimal jusqu'ici, jamais
+    // exercé avant que gameStore importe settings.
+    target.matchMedia = () => ({ matches: false });
     (globalThis as { window?: unknown }).window = target;
   } else {
     delete (globalThis as { window?: unknown }).window;

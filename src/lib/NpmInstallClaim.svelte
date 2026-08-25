@@ -5,6 +5,7 @@
   import { formatNumber } from "./format";
   import { gameStore } from "./gameStore.svelte";
   import { settings } from "./settings.svelte";
+  import { UI_STRINGS } from "./uiStrings";
   import { NPM_INSTALL_EFFECT, NPM_INSTALL_LABEL } from "./upgradeLabels";
 
   const gainLoc = $derived(formatNumber(new Decimal(NPM_INSTALL_BURST_LOC), settings.numberNotation));
@@ -18,6 +19,11 @@
   // unique par run tant qu'aucun Grand Rewrite n'a eu lieu.
   const available = $derived(gameStore.state.acte >= 2);
   const claimed = $derived(gameStore.state.upgrades.npmInstallClaimed);
+
+  const flavor = $derived(NPM_INSTALL_FLAVOR[settings.locale]);
+  const label = $derived(NPM_INSTALL_LABEL[settings.locale]);
+  const effect = $derived(NPM_INSTALL_EFFECT[settings.locale]);
+  const t = $derived(UI_STRINGS[settings.locale].npmInstallClaim);
 
   let flashing = $state(false);
   function onClaim() {
@@ -37,19 +43,19 @@
     class:flash-border={flashing}
     disabled={claimed}
     aria-disabled={claimed}
-    title={NPM_INSTALL_FLAVOR.tooltip}
+    title={flavor.tooltip}
     onclick={onClaim}
   >
     <span class="npm-icon mono" aria-hidden="true">◪</span>
     <span class="npm-body">
       <span class="npm-header">
-        <span class="npm-name">{NPM_INSTALL_LABEL}</span>
+        <span class="npm-name">{label}</span>
         {#if claimed}
-          <span class="npm-owned mono"><span aria-hidden="true">✔</span> récupérée</span>
+          <span class="npm-owned mono"><span aria-hidden="true">✔</span> {t.claimed}</span>
         {/if}
       </span>
-      <p class="npm-flavor">{NPM_INSTALL_FLAVOR.description}</p>
-      <p class="npm-effect">{NPM_INSTALL_EFFECT}</p>
+      <p class="npm-flavor">{flavor.description}</p>
+      <p class="npm-effect">{effect}</p>
       <span class="npm-stats mono">
         <span class="npm-gain">+{gainLoc} LoC</span>
         <span class="npm-cost">+{costDette} dette</span>

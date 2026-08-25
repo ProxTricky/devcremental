@@ -1,6 +1,8 @@
 <script lang="ts">
   import { bugMultiplier } from "../engine/formulas";
   import { gameStore, type LogEntry } from "./gameStore.svelte";
+  import { settings } from "./settings.svelte";
+  import { UI_STRINGS } from "./uiStrings";
 
   /**
    * Zone 4d (visual-identity.md §3.7 4d) : onglets PROBLEMS / OUTPUT. PROBLEMS
@@ -20,19 +22,21 @@
     level: LogEntry["level"];
   }
 
+  const t = $derived(UI_STRINGS[settings.locale].bottomPanel);
+
   const problems = $derived.by((): ProblemLine[] => {
     const lines: ProblemLine[] = [];
     if (bugsCount > 0) {
-      lines.push({ text: `${bugsCount} bugs actifs · −${bugPenaltyPct} % production`, level: "error" });
+      lines.push({ text: t.bugsActive(bugsCount, bugPenaltyPct), level: "error" });
     }
     if (refactorActif) {
       lines.push({
-        text: "refactor en cours — écriture et debug bloqués",
+        text: t.refactorInProgress,
         level: "warn",
       });
     }
     if (lines.length === 0) {
-      lines.push({ text: "aucun problème", level: "info" });
+      lines.push({ text: t.noProblems, level: "info" });
     }
     return lines;
   });

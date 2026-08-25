@@ -6,6 +6,7 @@
   import { gameStore } from "./gameStore.svelte";
   import { LANGUE_LABELS } from "./langueLabels";
   import { settings } from "./settings.svelte";
+  import { UI_STRINGS } from "./uiStrings";
 
   /**
    * Modale Grand Rewrite (visual-identity.md §5) : le seul plein écran du jeu.
@@ -22,6 +23,8 @@
   let triggerEl: HTMLElement | null = null;
 
   const karmaPreview = $derived(karmaGagne(gameStore.state.locTotal));
+  const t = $derived(UI_STRINGS[settings.locale].grandRewriteModal);
+  const langueFlavor = $derived(LANGUE_FLAVOR[settings.locale]);
 
   $effect(() => {
     if (open) {
@@ -59,21 +62,27 @@
     if (a.multProdLocTick === null) {
       lines.push({
         glyph: "~",
-        text: `prod ×${JS_CHAOS_MIN.toFixed(2)}…×${JS_CHAOS_MAX.toFixed(2)} par tick`,
+        text:
+          settings.locale === "en"
+            ? `${t.effectProd} ×${JS_CHAOS_MIN.toFixed(2)}…×${JS_CHAOS_MAX.toFixed(2)} per tick`
+            : `${t.effectProd} ×${JS_CHAOS_MIN.toFixed(2)}…×${JS_CHAOS_MAX.toFixed(2)} par tick`,
       });
     } else if (a.multProdLocTick !== 1) {
       lines.push({
         glyph: a.multProdLocTick > 1 ? "+" : "-",
-        text: `prod ×${a.multProdLocTick.toFixed(2)}`,
+        text: `${t.effectProd} ×${a.multProdLocTick.toFixed(2)}`,
       });
     }
     if (a.multTauxBug !== 1) {
-      lines.push({ glyph: a.multTauxBug < 1 ? "+" : "-", text: `bugs ×${a.multTauxBug.toFixed(2)}` });
+      lines.push({
+        glyph: a.multTauxBug < 1 ? "+" : "-",
+        text: `${t.effectBugs} ×${a.multTauxBug.toFixed(2)}`,
+      });
     }
     if (a.multCoefDetteActe !== 1) {
       lines.push({
         glyph: a.multCoefDetteActe < 1 ? "+" : "-",
-        text: `dette ×${a.multCoefDetteActe.toFixed(2)}`,
+        text: `${t.effectDebt} ×${a.multCoefDetteActe.toFixed(2)}`,
       });
     }
     return lines;
@@ -88,11 +97,10 @@
   onclose={requestClose}
   oncancel={requestClose}
 >
-  <div class="overtitle mono">Prestige 1 · Grand Rewrite</div>
-  <h1 id="rewrite-title" class="rewrite-title">grand rewrite</h1>
+  <div class="overtitle mono">{t.overtitle}</div>
+  <h1 id="rewrite-title" class="rewrite-title">{t.title}</h1>
   <p class="rewrite-paragraph">
-    Choisis l'archétype de langage de la prochaine run. Tes LoC totales sont converties en
-    Karma, puis les compteurs de cette run repartent à zéro.
+    {t.paragraph}
   </p>
 
   <div class="conversion">
@@ -106,11 +114,11 @@
   </div>
 
   <fieldset class="archetypes">
-    <legend class="section-title">Langage de la prochaine run</legend>
+    <legend class="section-title">{t.legend}</legend>
     <div class="archetype-grid">
       {#each ARCHETYPE_IDS as langue (langue)}
         <label class="archetype-card" class:selected={choice === langue}>
-          {#if choice === langue}<span class="chosen-tag mono" aria-hidden="true">choisi</span>{/if}
+          {#if choice === langue}<span class="chosen-tag mono" aria-hidden="true">{t.chosenTag}</span>{/if}
           <input
             type="radio"
             class="archetype-radio"
@@ -127,8 +135,8 @@
               </span>
             {/each}
           </span>
-          <span class="archetype-flavor" title={LANGUE_FLAVOR[langue].tooltip}>
-            {LANGUE_FLAVOR[langue].description}
+          <span class="archetype-flavor" title={langueFlavor[langue].tooltip}>
+            {langueFlavor[langue].description}
           </span>
         </label>
       {/each}
@@ -136,8 +144,8 @@
   </fieldset>
 
   <div class="rewrite-actions">
-    <button type="button" class="btn-cancel" onclick={requestClose}>annuler</button>
-    <button type="button" class="btn-confirm mono" onclick={confirm}>confirmer le rewrite</button>
+    <button type="button" class="btn-cancel" onclick={requestClose}>{t.cancel}</button>
+    <button type="button" class="btn-confirm mono" onclick={confirm}>{t.confirm}</button>
   </div>
 </dialog>
 

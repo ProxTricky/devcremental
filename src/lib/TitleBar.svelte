@@ -2,6 +2,8 @@
   import { gameStore } from "./gameStore.svelte";
   import { settings } from "./settings.svelte";
   import type { NumberNotation } from "./format";
+  import type { Locale } from "./i18n";
+  import { UI_STRINGS } from "./uiStrings";
 
   /**
    * Zone 1 (visual-identity.md §3.4) : châssis --bg-frame, 38px. Chaque entrée
@@ -13,12 +15,15 @@
 
   const rewriteAvailable = $derived(gameStore.state.acte >= 2);
   const acte2 = $derived(gameStore.state.acte >= 2);
+  const t = $derived(UI_STRINGS[settings.locale].titleBar);
 
-  const ACTE_INFO: Record<number, { roman: string; branch: string }> = {
-    1: { roman: "i", branch: "acte-1/solo-dev" },
-    2: { roman: "ii", branch: "acte-2/open-source" },
-  };
-  const acteInfo = $derived(ACTE_INFO[gameStore.state.acte] ?? ACTE_INFO[1]);
+  const acteInfo = $derived.by(() => {
+    const ACTE_INFO: Record<number, { roman: string; branch: string }> = {
+      1: { roman: "i", branch: t.branch1 },
+      2: { roman: "ii", branch: t.branch2 },
+    };
+    return ACTE_INFO[gameStore.state.acte] ?? ACTE_INFO[1];
+  });
 
   let filePopoverOpen = $state(false);
   let editPopoverOpen = $state(false);
@@ -88,7 +93,7 @@
   }
 
   function resetAction() {
-    if (window.confirm("Réinitialiser la partie ? Cette action efface la progression actuelle.")) {
+    if (window.confirm(t.resetConfirm)) {
       gameStore.resetGame();
       closePopovers();
     }
@@ -110,10 +115,10 @@
       {#if filePopoverOpen}
         <div class="popover">
           <button type="button" class="popover-action" onclick={exportAction}
-            >exporter la sauvegarde</button
+            >{t.exportSave}</button
           >
           <button type="button" class="popover-action" onclick={() => fileInputEl?.click()}
-            >importer un fichier…</button
+            >{t.importFile}</button
           >
           <input
             bind:this={fileInputEl}
@@ -122,10 +127,10 @@
             class="hidden-input"
             onchange={importFromFile}
           />
-          <label class="popover-label" for="import-textarea">ou coller l'export :</label>
+          <label class="popover-label" for="import-textarea">{t.orPasteExport}</label>
           <textarea id="import-textarea" bind:value={importText} rows="2"></textarea>
           <button type="button" class="popover-action confirm" onclick={importAction}
-            >importer</button
+            >{t.importBtn}</button
           >
           {#if importError}
             <p class="popover-error">{importError}</p>
@@ -146,23 +151,33 @@
               checked={settings.reduceMotion}
               onchange={() => settings.toggleReduceMotion()}
             />
-            réduire les animations
+            {t.reduceMotion}
           </label>
           <label class="popover-check">
-            notation des nombres :
+            {t.numberNotation}
             <select
               value={settings.numberNotation}
               onchange={(e) =>
                 settings.setNumberNotation(e.currentTarget.value as NumberNotation)}
             >
-              <option value="integer">Entier</option>
-              <option value="compact">Compact</option>
-              <option value="scientific">Scientifique</option>
-              <option value="hex">Hexadécimal</option>
+              <option value="integer">{t.notationInteger}</option>
+              <option value="compact">{t.notationCompact}</option>
+              <option value="scientific">{t.notationScientific}</option>
+              <option value="hex">{t.notationHex}</option>
+            </select>
+          </label>
+          <label class="popover-check">
+            {t.languageLabel}
+            <select
+              value={settings.locale}
+              onchange={(e) => settings.setLocale(e.currentTarget.value as Locale)}
+            >
+              <option value="fr">Français</option>
+              <option value="en">English</option>
             </select>
           </label>
           <button type="button" class="popover-action danger" onclick={resetAction}
-            >réinitialiser la partie</button
+            >{t.resetGame}</button
           >
         </div>
       {/if}
@@ -184,7 +199,7 @@
   </nav>
 
   <div class="context mono">
-    devcremental — acte {acteInfo.roman} — git:({acteInfo.branch})
+    devcremental — {t.act} {acteInfo.roman} — git:({acteInfo.branch})
   </div>
 </header>
 

@@ -2,11 +2,15 @@
   import { CAFE_MULT_CLIC } from "../engine/constants";
   import { CAFE_FLAVOR } from "./flavorText";
   import { gameStore } from "./gameStore.svelte";
+  import { settings } from "./settings.svelte";
+  import { UI_STRINGS } from "./uiStrings";
 
   // §3.7 4c/§3.9 : le stock ☕ N/3 migre dans la barre de statut (StatusBar) —
   // ce bouton ne garde que l'action et le statut de buff actif (role=status).
   const canDrink = $derived(gameStore.state.cafeStock >= 1);
   const buffSecondsLeft = $derived(Math.ceil(gameStore.state.cafeBuffRemaining));
+  const flavor = $derived(CAFE_FLAVOR[settings.locale]);
+  const t = $derived(UI_STRINGS[settings.locale].coffeeButton);
 </script>
 
 <div class="coffee">
@@ -14,14 +18,14 @@
     type="button"
     class="btn-secondary"
     disabled={!canDrink}
-    title={CAFE_FLAVOR.tooltip}
+    title={flavor.tooltip}
     onclick={() => gameStore.drinkCoffee()}
   >
-    Boire un café
+    {t.drink}
   </button>
   {#if gameStore.cafeBuffActive}
     <div class="coffee-buff mono" role="status">
-      Buff actif ×{CAFE_MULT_CLIC} — {buffSecondsLeft}s
+      {t.buffActive(CAFE_MULT_CLIC, buffSecondsLeft)}
     </div>
   {/if}
 </div>

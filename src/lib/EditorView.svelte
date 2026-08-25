@@ -8,6 +8,7 @@
   import { LANGUE_LABELS } from "./langueLabels";
   import { settings } from "./settings.svelte";
   import Terminal from "./Terminal.svelte";
+  import { UI_STRINGS } from "./uiStrings";
 
   /**
    * Zone 4c (visual-identity.md §3.7 4c) : enveloppe Terminal.svelte + rangée
@@ -30,17 +31,24 @@
     setTimeout(() => (flashPrimary = false), 140);
   }
 
+  const t = $derived(UI_STRINGS[settings.locale].editorView);
   const langueLabel = $derived(
     gameStore.state.langueActive === "none"
-      ? "aucun (pré-Rewrite)"
+      ? (settings.locale === "en" ? "none (pre-Rewrite)" : "aucun (pré-Rewrite)")
       : LANGUE_LABELS[gameStore.state.langueActive],
   );
 
   const debtLog = $derived(
-    debtLogFlavor(formatNumber(gameStore.state.dette, settings.numberNotation), String(pctPerdu), bugsCount),
+    debtLogFlavor(
+      settings.locale,
+      formatNumber(gameStore.state.dette, settings.numberNotation),
+      String(pctPerdu),
+      bugsCount,
+    ),
   );
   const readme = $derived(
     readmeFlavor(
+      settings.locale,
       gameStore.state.acte,
       langueLabel,
       formatNumber(gameStore.state.karmaRewrite, settings.numberNotation),
@@ -68,11 +76,11 @@
         disabled={bugsCount === 0 || refactorActif}
         onclick={() => gameStore.clickDebug()}
       >
-        Debug
+        {t.debug}
       </button>
       <CoffeeButton />
     </div>
-    <p class="action-hint">espace ou clic</p>
+    <p class="action-hint">{t.hint}</p>
   {:else if activeTab === "debt"}
     <div class="fact-view mono">
       <p>// {debtLog.description}</p>
@@ -87,11 +95,11 @@
         <p class="flavor-tooltip">{readme.tooltip}</p>
       {/if}
       <p class="credit">
-        // extraits de code inspirés de <a
+        // {t.creditPrefix} <a
           href={CODE_SAMPLE_SOURCE[gameStore.state.langueActive].url}
           target="_blank"
           rel="noopener noreferrer">{CODE_SAMPLE_SOURCE[gameStore.state.langueActive].repo}</a
-        > — voir THIRD_PARTY_NOTICES.md
+        > {t.creditSuffix}
       </p>
     </div>
   {/if}
