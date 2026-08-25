@@ -15,7 +15,9 @@ import type { Locale } from "./i18n";
  * upgrade, repris tel quel de §3/§4 — jamais recalculé côté composant.
  *
  * Locale-aware depuis la demande user du 2026-08-25 (i18n fr/en) — `fr`
- * copié tel quel, `en` traduction fonctionnelle.
+ * copié tel quel. `en` relu par content-writer le 2026-08-25 : « Works on my
+ * machine » est la formule consacrée en anglais (PLAN.md §6 la cite), elle est
+ * gardée mot pour mot ; U4 garde son clin d'œil `npm install` explicite.
  */
 export const UPGRADE_LABELS: Record<Locale, Record<UpgradeId, string>> = {
   fr: {
@@ -37,9 +39,9 @@ export const UPGRADE_EFFECT: Record<Locale, Record<UpgradeId, string>> = {
     testsAutomatises: `Accumulation de dette technique ralentie de 30 % (×${TESTS_AUTO_MULT_COEF_DETTE}).`,
   },
   en: {
-    autoComplete: `+${AUTO_COMPLETE_TAUX} passive LoC/s, no click or generator needed.`,
-    worksOnMyMachine: `Production penalty per bug halved (×${WORKS_ON_MY_MACHINE_MULT_IMPACT_BUG}) — the floor moves from 40 to 80 active bugs.`,
-    testsAutomatises: `Technical debt accumulation slowed by 30% (×${TESTS_AUTO_MULT_COEF_DETTE}).`,
+    autoComplete: `+${AUTO_COMPLETE_TAUX} passive LoC/s, no click and no generator needed.`,
+    worksOnMyMachine: `Production penalty per bug cut in half (×${WORKS_ON_MY_MACHINE_MULT_IMPACT_BUG}) — the floor moves from 40 to 80 active bugs.`,
+    testsAutomatises: `Technical debt accumulates 30% slower (×${TESTS_AUTO_MULT_COEF_DETTE}).`,
   },
 };
 
@@ -53,10 +55,10 @@ export const UPGRADE_EFFECT: Record<Locale, Record<UpgradeId, string>> = {
  */
 export const NPM_INSTALL_LABEL: Record<Locale, string> = {
   fr: "Installer une dépendance",
-  en: "Install a dependency",
+  en: "Just npm install it",
 };
 
 export const NPM_INSTALL_EFFECT: Record<Locale, string> = {
   fr: "Gain instantané massif, payé en dette immédiate. Une seule fois par run.",
-  en: "Massive instant gain, paid for in immediate debt. Once per run.",
+  en: "Huge instant gain, paid for in immediate debt. Once per run.",
 };

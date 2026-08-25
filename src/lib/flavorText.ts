@@ -22,10 +22,12 @@ import type { Locale } from "./i18n";
  * publicationOpenSourceFlavor(locale, starsAffichees).
  *
  * Locale-aware depuis la demande user du 2026-08-25 (i18n fr/en) : `fr` est
- * copié tel quel du contenu d'origine (déjà validé, jamais retouché), `en` est
- * une traduction fonctionnelle du sens — PAS nécessairement drôle : une passe
- * dédiée de content-writer viendra polir le ton humoristique de la version
- * anglaise à partir de cette base.
+ * copié tel quel du contenu d'origine (déjà validé, jamais retouché). `en` est
+ * passé par content-writer le 2026-08-25 : ce n'est plus une traduction du
+ * français mais une réécriture à intention égale — quand la punchline française
+ * ne survit pas au mot-à-mot, la version anglaise en trouve une autre qui dit la
+ * même vérité de métier. Les deux langues restent indépendamment relisables ;
+ * ni l'une ni l'autre n'est la « source » de l'autre.
  */
 export interface FlavorEntry {
   /** 1–2 phrases, affichées sous le nom du générateur / du bouton. */
@@ -58,21 +60,21 @@ export const GENERATOR_FLAVOR: Record<Locale, Record<GeneratorId, FlavorEntry>> 
   en: {
     copierColler: {
       description:
-        "Ctrl+C on the first answer, Ctrl+V into your file. You read neither the question nor the comments saying it's dangerous.",
+        "Ctrl+C on the first answer, Ctrl+V into your file. You didn't read the question, and you definitely didn't read the comments explaining why this is dangerous.",
       tooltip:
-        "The founding reflex of the trade. Produces little, but produces immediately and without thinking — exactly why you buy it first. The code comes from someone with a lot of reputation, so nothing can possibly go wrong.",
+        "The founding reflex of the profession. It produces very little, but it produces right now and without thinking — which is exactly why it's your first purchase. The code came from someone with a lot of reputation points, so nothing bad can happen.",
     },
     stagiaire: {
       description:
-        "Three days to set up their environment, then they push. They never ask why, which will cause problems later.",
+        "Three days to get their environment running, then they push. They never ask why, which is going to be a problem later.",
       tooltip:
-        "Your first real step into delegation: you stop typing everything yourself. In exchange, you discover that reviewing code is a whole job on its own, one you never learned either.",
+        "Your first real taste of delegation: you stop typing everything yourself. In exchange, you find out that reading someone else's code is a job of its own — and one nobody taught you either.",
     },
     rubberDuck: {
       description:
-        "You explain your bug out loud to it. By the third sentence you've found the answer yourself, and it never even blinked.",
+        "You explain the bug to it out loud. By the third sentence you've solved it yourself, and it hasn't so much as blinked.",
       tooltip:
-        "The only Act I generator that does two jobs: it writes code and passively fixes bugs — more than it creates itself. Best ratio on the team, and it's a plastic duck. Don't dig deeper.",
+        "The only Act I generator that holds two jobs: it writes code and it quietly fixes bugs — more than it creates. Best ratio on the team, and it's a plastic duck. Don't think about it too hard.",
     },
   },
 };
@@ -86,9 +88,9 @@ export const CAFE_FLAVOR: Record<Locale, FlavorEntry> = {
   },
   en: {
     description:
-      "Your only dependency with no alternative. Multiplies what each click earns, for as long as it lasts.",
+      "The one dependency with no alternative package. Multiplies what every click is worth, for as long as it lasts.",
     tooltip:
-      "Only speeds you up: the generators don't drink. Drinking another one while a coffee is already active resets the timer without stacking the effect — your liver has a limit, and so does your stock, and it refills at its own pace, not yours.",
+      "Speeds up you and only you: the generators don't drink. Pouring another one while the first is still working restarts the timer without stacking anything — your liver has a limit, and so does the pot, and it refills on its own schedule, not yours.",
   },
 };
 
@@ -102,7 +104,7 @@ export const CAFE_FLAVOR: Record<Locale, FlavorEntry> = {
  */
 export const REFACTOR_FLAVOR_NAME: Record<Locale, string> = {
   fr: "Refactorer pour de vrai",
-  en: "Actually refactor",
+  en: "Actually refactor it",
 };
 
 export const REFACTOR_FLAVOR: Record<Locale, FlavorEntry> = {
@@ -114,9 +116,9 @@ export const REFACTOR_FLAVOR: Record<Locale, FlavorEntry> = {
   },
   en: {
     description:
-      "As long as you hold the button, debt goes down and you don't write a single line. Exactly why it never happens on a real project.",
+      "Hold the button and the debt goes down while you write exactly zero lines. Which is precisely why this never happens on a real project.",
     tooltip:
-      "The only job whose result is measured by what doesn't happen. While you refactor, you can't write code or fix a bug — there's nothing to show at the end of the day. The generators, meanwhile, keep piling new code on top of what you're tidying up: nobody told them cleanup was happening.",
+      "The only work whose result is measured by what doesn't happen. While you refactor you can't write code and you can't fix a bug — there is nothing to show for your day. The generators, meanwhile, keep stacking fresh code on top of whatever you're tidying up: nobody told them it was cleanup day.",
   },
 };
 
@@ -150,21 +152,21 @@ export const LANGUE_FLAVOR: Record<Locale, Record<Exclude<LangueId, "none">, Fla
   en: {
     rust: {
       description:
-        "The compiler refuses your code until it's correct. You'll hate it for hours, then discover it was right every single time.",
+        "The compiler refuses your code until it's correct. You'll hate it for hours, then find out it was right every single time.",
       tooltip:
-        "You spend more time convincing the compiler than producing, and in exchange you stop debugging: what compiles works, and debt takes much longer to become your problem. The price is prototyping — the dumb idea you wanted to test in five minutes takes you the whole afternoon. In return, you won't be rewriting this module in six months.",
+        "You spend more time arguing with the compiler than shipping, and in exchange you stop debugging: if it compiles, it works, and the debt takes far longer to become your problem. The price is prototyping — the dumb idea you wanted to try in five minutes costs you the afternoon. The consolation is that you won't be rewriting this module in six months.",
     },
     python: {
       description:
-        "You write the function in three lines, you're proud, you move on. It will crash later, on a type you hadn't thought of.",
+        "You write the function in three lines, you feel proud, you move on. It'll crash later, on a type you never thought about.",
       tooltip:
-        "The language that lets you do anything, including what you didn't mean to do. You produce noticeably faster than anywhere else, and you discover your mistakes at the most expensive moment: at runtime, while someone is using it. It worked on the test dataset, which had three rows and no null values.",
+        "The language that lets you do anything, including the things you didn't mean to do. You ship noticeably faster than anywhere else, and you find your mistakes in the most expensive place there is: at runtime, while somebody is using it. It worked on the test dataset, which had three rows and no nulls.",
     },
     javascript: {
       description:
-        "One tick everything ships on its own, the next nothing moves — same code, same machine, same you. The only archetype where randomness is openly part of the deal.",
+        "One tick everything ships itself, the next nothing moves at all — same code, same machine, same you. The only archetype where randomness is openly part of the contract.",
       tooltip:
-        "No buggier, no more indebted than the others: just unpredictable. Your output changes from one tick to the next without you touching anything, exactly like the ecosystem it lives in. On average you come out ahead — and an average never reassured anyone on a Friday night.",
+        "No buggier and no deeper in debt than the others: just unpredictable. Your output changes from one tick to the next without you touching a thing, exactly like the ecosystem it lives in. On average you come out ahead — and an average has never reassured anybody on a Friday night.",
     },
   },
 };
@@ -181,9 +183,9 @@ export const LANGUE_FLAVOR: Record<Locale, Record<Exclude<LangueId, "none">, Fla
 export function publicationOpenSourceFlavor(locale: Locale, starsAffichees: string): FlavorEntry {
   if (locale === "en") {
     return {
-      description: `Public repo. The README still says "TODO", the last commit is called "wip", and nobody will ever read half of these files. Strangers starred it anyway: ${starsAffichees} ⭐ Stars.`,
+      description: `The repo is public. The README still says "TODO", the last commit is called "wip", and nobody will ever read half of these files. Complete strangers starred it anyway: ${starsAffichees} ⭐ Stars.`,
       tooltip:
-        "Publishing isn't finishing: it's accepting that code written at two in the morning is now readable by people who will never ask why you did that — but who will open an issue the day it breaks for them. From now on, everything you stack up has an audience. And a debt.",
+        "Publishing isn't finishing: it's accepting that code you wrote at two in the morning is now readable by people who will never ask why you did it that way — but who will open an issue the day it breaks on their machine. From now on, everything you stack up has an audience. And a debt.",
     };
   }
   return {
@@ -224,9 +226,9 @@ export function debtLogFlavor(
 ): FlavorEntry {
   if (locale === "en") {
     return {
-      description: `[WARN] debt ${dettePct} — last recorded decrease: never. ${pctPerdu}% of your output goes to keeping decisions made one evening, in a hurry, by you, standing up. ${bugsCount} entries still open, all annotated "known".`,
+      description: `[WARN] debt ${dettePct} — last recorded decrease: never. ${pctPerdu}% of your output goes into propping up decisions made one evening, in a hurry, by you. ${bugsCount} entries still open, every one of them tagged "known".`,
       tooltip:
-        "This file has never been read in full, and it knows it. It doesn't report outages: it patiently logs everything that worked anyway, while it waits. It runs whether you open it or not — the only part of the project that has never fallen behind schedule.",
+        "This file has never been read all the way through, and it knows it. It doesn't report outages: it patiently logs everything that worked anyway, and it waits. It runs whether you open it or not — the only part of the project that has never missed a deadline.",
     };
   }
   return {
@@ -255,9 +257,9 @@ export function readmeFlavor(
 ): FlavorEntry {
   if (locale === "en") {
     return {
-      description: `# project · act ${acte} · ${langueLabel}. Installation: TODO. Contributing: TODO. Rewrite Karma: ${karma} — the only line in the file that's still true, and nobody knows what it measures.`,
+      description: `# project · act ${acte} · ${langueLabel}. Installation: TODO. Contributing: TODO. Rewrite Karma: ${karma} — the only line in this file that's still true, and nobody knows what it measures.`,
       tooltip:
-        "A README gets updated exactly twice: the day the repo is created, and the day someone opens an issue saying it doesn't work. In between, it faithfully describes a project that stopped existing two rewrites ago. You'll tidy it up right before throwing everything away, as usual.",
+        "A README gets updated exactly twice: the day the repo is created, and the day somebody opens an issue to say it doesn't work. In between, it faithfully describes a project that stopped existing two rewrites ago. You'll tidy it up right before throwing everything away, as usual.",
     };
   }
   return {
@@ -300,21 +302,21 @@ export const UPGRADE_FLAVOR: Record<Locale, Record<UpgradeId, FlavorEntry>> = {
   en: {
     autoComplete: {
       description:
-        "It suggests the end of your line before you've thought of it. You hit Tab, it compiles, you don't reread it — and it keeps going when you stop typing.",
+        "It finishes your line before you've thought of the end of it. You hit Tab, it compiles, you don't reread it — and it keeps going after you've stopped typing.",
       tooltip:
-        "The first moment code appears without you asking for anything. It's not faster than you tick by tick: it just never stops, even when you lift your hands off the keyboard. The day you can get up for a drink without losing progress, you've stopped working and started playing.",
+        "The first time code shows up without you asking for any of it. Tick for tick it isn't faster than you: it just never stops, including when you take your hands off the keyboard. The day you can walk away for a drink without losing progress is the day you stopped working and started playing.",
     },
     worksOnMyMachine: {
       description:
-        "You couldn't reproduce it locally, so it's not a bug, it's a configuration issue. All the bugs are still there — they just weigh a lot less on your output.",
+        "You couldn't reproduce it locally, so it isn't a bug, it's a configuration issue. Every one of them is still there — they just weigh a lot less on your output.",
       tooltip:
-        "Fixes nothing, slows nothing, cleans nothing: it simply changes who has the problem. You can let the list grow much longer before it shows on your throughput, and the time you no longer spend debugging, you spend producing more to debug later. The floor still exists: it's just further away.",
+        "Fixes nothing, slows nothing, cleans nothing: it only changes whose problem it is. You can let the list grow far longer before it shows up in your throughput, and the time you no longer spend debugging, you spend producing things to debug later. The floor is still there. It's just further away.",
     },
     testsAutomatises: {
       description:
-        "You write code whose only job is to confirm everything else still works. It adds no feature, which is exactly why it's the first thing skipped when it's urgent.",
+        "You write code whose only job is to confirm that the rest of it still works. It ships no feature, which is exactly why it's the first thing cut the moment anything is urgent.",
       tooltip:
-        "Repays none of what you already owe: only slows down how fast you go into debt. The return on a test is an incident that doesn't happen — invisible, therefore indefensible in a meeting, therefore something to buy before you need it. Available from Act I, where it does strictly nothing, which is the best possible time.",
+        "Pays back nothing you already owe: it only slows the rate at which you borrow more. The return on a test is an incident that doesn't happen — invisible, therefore impossible to defend in a meeting, therefore something you have to buy before you need it. Available from Act I, where it does absolutely nothing for you, which is the ideal time to buy it.",
     },
   },
 };
@@ -337,8 +339,8 @@ export const NPM_INSTALL_FLAVOR: Record<Locale, FlavorEntry> = {
   },
   en: {
     description:
-      "One command, two seconds, and your problem is solved by someone you've never met. What you gain arrives instantly; what it weighs, you drag along until the next Rewrite.",
+      "One command, two seconds, and your problem is solved by somebody you have never met. What you gain lands immediately; what it weighs, you carry until the next Rewrite.",
     tooltip:
-      "The folder that just appeared contains more lines than everything you've written since the start, and you'll only ever use one function from it. It's the only honest trade-off in the game: claim early and the boost funds your next purchases while there's still time to absorb the debt; claim late and you add weight to a project that didn't need it. Once per run — after that, you have to write the lines yourself.",
+      "The folder that just appeared holds more lines than everything you've written since day one, and you will use exactly one function out of it. It's the only honest trade-off in the game: claim it early and the jump pays for your next purchases while the debt still has time to be absorbed; claim it late and you're adding weight to a project that was doing fine without it. Once per run — after that, you write the lines yourself.",
   },
 };

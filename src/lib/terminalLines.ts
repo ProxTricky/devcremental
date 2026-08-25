@@ -35,9 +35,12 @@ import type { Locale } from "./i18n";
  * assumé, une blague en ouverture n'est jamais un mauvais choix ici.
  *
  * Locale-aware depuis la demande user du 2026-08-25 (i18n fr/en) : `fr` est
- * copié tel quel du pool d'origine (déjà validé), `en` est une traduction
- * fonctionnelle du sens de chaque blague — PAS nécessairement drôle en soi, une
- * passe dédiée de content-writer viendra polir le ton de la version anglaise.
+ * copié tel quel du pool d'origine (déjà validé, jamais retouché). `en` est
+ * passé par content-writer le 2026-08-25 : appariement blague pour blague, pas
+ * mot pour mot — quand une punchline française ne survit pas à la traduction,
+ * la ligne anglaise raconte le même aveu (même type de bug, même fatigue) avec
+ * une formule qui existe vraiment en anglais. Les deux pools gardent le même
+ * nombre d'entrées et le même ordre, pour rester diffables.
  * `CODE_SAMPLES` (vrai code des dépôts publics) ne change jamais avec la
  * langue de l'interface.
  */
@@ -82,12 +85,12 @@ const CODE_LINES: Record<Locale, readonly string[]> = {
   en: [
     "// TODO: refactor this properly (2019)",
     "// no idea why this works, do not touch",
-    "const finalFinal_v2_OK = compute(input);",
-    "let temp = temp2; // will rename tomorrow",
+    "const finalFinal_v2_useThis = compute(input);",
+    "let temp = temp2; // renaming these tomorrow",
     "function doStuff(data, data2, dataFinal) {",
     "  // @ts-ignore  I know what I'm doing",
-    "  return true; // isValid(): optimistic version",
-    "} catch (e) {} // this will never happen",
+    "  return true; // isValid(): optimistic implementation",
+    "} catch (e) {} // can't happen",
     "console.log('here');",
     "console.log('HERE 2');",
     "console.log('WHY');",
@@ -95,25 +98,25 @@ const CODE_LINES: Record<Locale, readonly string[]> = {
     "  if ((user = null)) return; // ??",
     "const MAGIC_DELAY_DO_NOT_LOWER = 100;",
     "  setTimeout(render, MAGIC_DELAY_DO_NOT_LOWER);",
-    "const password = 'hunter2'; // TODO: env variable",
-    "const cache = {}; // invalidation: tomorrow's problem",
+    "const password = 'hunter2'; // TODO: move to env",
+    "const cache = {}; // invalidation is tomorrow's problem",
     "  await coffee(); // critical dependency",
-    "// copied from Stack Overflow, answer to a different question",
-    "// (the author deleted their account, rest in peace)",
+    "// copied from Stack Overflow, from a question about something else",
+    "// (author deleted their account, rest in peace)",
     "const iHaveNoIdeaWhatImDoing = true;",
-    "throw new Error('impossible'); // happens 3x/day",
+    "throw new Error('impossible'); // fires 3x a day",
     "  return null; // the compiler wanted a return",
-    "/* eslint-disable */ // temporary",
+    "/* eslint-disable */ // just for now",
     "if (env === 'prod') return; // just in case",
-    "// explained it to the duck, it said nothing, I got it",
+    "// explained it to the duck, duck said nothing, found it",
     "git commit -m 'fix'",
-    "git commit -m 'fix the fix'",
-    "git commit -m 'revert the fix of the fix'",
+    "git commit -m 'actually fix'",
+    "git commit -m 'revert \"actually fix\"'",
     "rm -rf node_modules && npm install # last resort",
     "// works on my machine",
-    "  z-index: 99999; /* important */",
-    "  handleEdgeCase(); // stub, write it someday",
-    "const isNotUnavailable = !disabled; // crystal clear, right?",
+    "  z-index: 99999 !important; /* sorry */",
+    "  handleEdgeCase(); // stub, someday",
+    "const isNotUnavailable = !disabled; // reads fine to me",
     "  process.exit(0); // ship it",
   ],
 };

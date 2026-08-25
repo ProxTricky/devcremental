@@ -13,7 +13,9 @@ import type { Locale } from "./i18n";
  * Locale-aware depuis la demande user du 2026-08-25 (i18n fr/en), sauf
  * `LANGUE_LABELS` (noms propres Rust/Python/JavaScript, identiques dans les
  * deux langues) et `LANGUE_FILE_NAME` (noms de fichiers, artefacts de code
- * jamais traduits).
+ * jamais traduits). `en` relu par content-writer le 2026-08-25 pour la fluidité
+ * de la phrase uniquement : ces libellés sont mécaniques dans les deux langues,
+ * l'humour vit dans `LANGUE_FLAVOR` (flavorText.ts).
  */
 export const LANGUE_LABELS: Record<Exclude<LangueId, "none">, string> = {
   rust: "Rust",
@@ -29,10 +31,10 @@ export const LANGUE_EFFECT: Record<Locale, Record<Exclude<LangueId, "none">, str
       "Production aléatoire ×0.70 à ×1.90 par tick (espérance ×1.30) — pas d'effet sur bugs/dette.",
   },
   en: {
-    rust: "Production ×0.80, bugs ×0.10, debt ×0.50 — slower, but nearly zero bugs.",
+    rust: "Production ×0.80, bugs ×0.10, debt ×0.50 — slower, but almost no bugs.",
     python: "Production ×1.15, bugs ×1.30 — faster, more runtime bugs.",
     javascript:
-      "Random production ×0.70 to ×1.90 per tick (expected value ×1.30) — no effect on bugs/debt.",
+      "Random production, ×0.70 to ×1.90 per tick (expected ×1.30) — no effect on bugs or debt.",
   },
 };
 
