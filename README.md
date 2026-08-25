@@ -1,47 +1,39 @@
-# Svelte + TS + Vite
+# devcremental
 
-This template should help get you started developing with Svelte and TypeScript in Vite.
+Jeu incrémental sur le thème du développement logiciel, pour un public dev.
+Les mécaniques *sont* des concepts de dev (dette technique, refactoring, Grand
+Rewrite, bugs) plutôt qu'un simple thème posé sur un clicker générique.
 
-## Recommended IDE Setup
+**Jouer** : https://proxtricky.github.io/devcremental/
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+## Contexte projet
 
-## Need an official Svelte framework?
+- `PLAN.md` — plan de jeu complet et faisant autorité (concept, boucle de jeu,
+  balancing, roadmap).
+- `CLAUDE.md` — résumé opérationnel pour les agents/contributeurs.
+- `docs/design/` — specs normatives par mécanique (Acte I, Dette Technique,
+  upgrades, progression offline, notation des nombres, identité visuelle).
+- `THIRD_PARTY_NOTICES.md` — attribution des extraits de code réel affichés
+  dans le faux terminal (un dépôt public par archétype de langage).
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+## Développement
 
-## Technical considerations
-
-**Why use this over SvelteKit?**
-
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
-
-This template contains as little as possible to get started with Vite + TypeScript + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
-
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
-
-**Why `global.d.ts` instead of `compilerOptions.types` inside `jsconfig.json` or `tsconfig.json`?**
-
-Setting `compilerOptions.types` shuts out all other types not explicitly listed in the configuration. Using triple-slash references keeps the default TypeScript setting of accepting type information from the entire workspace, while also adding `svelte` and `vite/client` type information.
-
-**Why include `.vscode/extensions.json`?**
-
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
-
-**Why enable `allowJs` in the TS template?**
-
-While `allowJs: false` would indeed prevent the use of `.js` files in the project, it does not prevent the use of JavaScript syntax in `.svelte` files. In addition, it would force `checkJs: false`, bringing the worst of both worlds: not being able to guarantee the entire codebase is TypeScript, and also having worse typechecking for the existing JavaScript. In addition, there are valid use cases in which a mixed codebase may be relevant.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/rixo/svelte-hmr#svelte-hmr).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```ts
-// store.ts
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
+```bash
+npm install
+npm run dev      # serveur de dev, http://localhost:5173
+npm run check    # svelte-check + typecheck (app/worker/node)
+npm test         # vitest
+npm run build    # build de production (dist/)
 ```
+
+Stack : TypeScript + Svelte 5 + Vite, `break_eternity.js` pour les grands
+nombres, tick logique 10/s + accumulator dans un Web Worker, sauvegarde
+localStorage (export/import base64). Aucun backend — site statique.
+
+## Branches & CI
+
+- `main` : branche de production, protégée — un push doit avoir le check CI
+  ("test" : typecheck + tests + build) déjà vert sur ce commit.
+- `dev` : branche de travail.
+- Chaque push sur `main` déploie automatiquement sur GitHub Pages
+  (`.github/workflows/ci.yml`).
