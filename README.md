@@ -37,3 +37,7 @@ localStorage (export/import base64). Aucun backend — site statique.
 - `dev` : branche de travail.
 - Chaque push sur `main` déploie automatiquement sur GitHub Pages
   (`.github/workflows/ci.yml`).
+
+## Licence
+
+[MIT](LICENSE).
