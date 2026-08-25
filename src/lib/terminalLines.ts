@@ -21,11 +21,18 @@ import { CODE_SAMPLES } from "./codeSamples";
  * code extrait de dépôts publics emblématiques (un par archétype de langage),
  * pour que le buffer ressemble à un vrai projet plutôt qu'à une suite de
  * blagues seules — sans perdre l'humour, qui reste le différenciateur (PLAN.md
- * §6). Ratio remonté à 60 % vrai code / 40 % blague le même jour (décision
- * user) : le vrai code devient l'essentiel du buffer, l'humour reste présent
- * mais minoritaire.
+ * §6).
+ *
+ * Rythme revu le même jour (2ᵉ décision user) : un ratio probabiliste ligne à
+ * ligne ne donnait jamais l'impression d'écrire quelque chose de cohérent.
+ * Remplacé par `nextTerminalLine`, une machine à 2 états tenue par
+ * Terminal.svelte (le seul appelant) : on révèle une fonction complète de
+ * `codeSamples.ts` ligne par ligne au fil des clics (une fonction de N lignes
+ * = N clics), puis, une fois la fonction terminée, EXACTEMENT une blague de
+ * `CODE_LINES` s'insère avant de tirer une nouvelle fonction au hasard.
+ * Le tout premier clic d'une run tombe dans ce 2ᵉ cas (curseur initial vide) —
+ * assumé, une blague en ouverture n'est jamais un mauvais choix ici.
  */
-const REAL_CODE_RATIO = 0.6;
 const CODE_LINES: readonly string[] = [
   "// TODO: refactorer ça proprement (2019)",
   "// je ne sais pas pourquoi ça marche, ne pas toucher",
@@ -64,10 +71,38 @@ const CODE_LINES: readonly string[] = [
   "  process.exit(0); // ship it",
 ];
 
-export function pickCodeLine(langueActive: LangueId): string {
-  if (Math.random() < REAL_CODE_RATIO) {
-    const pool = CODE_SAMPLES[langueActive];
-    return pool[Math.floor(Math.random() * pool.length)];
+/**
+ * État tenu par Terminal.svelte entre deux clics (un par instance de
+ * terminal — pas un singleton module : `initialTerminalCursor()` en crée un
+ * neuf). `pool: null` signifie "prochain appel = une blague, puis une
+ * nouvelle fonction" (couvre aussi bien le tout premier clic d'une run que la
+ * fin de la fonction précédente — même branche, cf. `nextTerminalLine`).
+ */
+export interface TerminalCursor {
+  readonly pool: readonly string[] | null;
+  readonly index: number;
+}
+
+export function initialTerminalCursor(): TerminalCursor {
+  return { pool: null, index: 0 };
+}
+
+/**
+ * Une ligne par clic. Fonction pure : `cursor` n'est jamais muté, l'appelant
+ * (Terminal.svelte) réassigne son état local au `cursor` renvoyé.
+ */
+export function nextTerminalLine(
+  cursor: TerminalCursor,
+  langueActive: LangueId,
+): { text: string; cursor: TerminalCursor } {
+  if (cursor.pool === null) {
+    const text = CODE_LINES[Math.floor(Math.random() * CODE_LINES.length)];
+    const functions = CODE_SAMPLES[langueActive];
+    const fn = functions[Math.floor(Math.random() * functions.length)];
+    return { text, cursor: { pool: fn, index: 0 } };
   }
-  return CODE_LINES[Math.floor(Math.random() * CODE_LINES.length)];
+  const text = cursor.pool[cursor.index];
+  const nextIndex = cursor.index + 1;
+  const done = nextIndex >= cursor.pool.length;
+  return { text, cursor: done ? { pool: null, index: 0 } : { pool: cursor.pool, index: nextIndex } };
 }

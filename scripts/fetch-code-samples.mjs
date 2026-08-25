@@ -1,83 +1,54 @@
 #!/usr/bin/env node
 /**
- * Régénère src/lib/codeSamples.ts à partir d'extraits réels de dépôts publics
- * emblématiques (un par archétype de langage du Grand Rewrite, cf.
- * src/engine/constants.ts LANGUE_IDS). Lignes utilisées comme flavor "vrai
- * code" dans Terminal.svelte, mélangées aux blagues de terminalLines.ts.
+ * Régénère src/lib/codeSamples.ts à partir de fonctions complètes et réelles
+ * choisies à la main dans des dépôts publics emblématiques (un par archétype
+ * de langage du Grand Rewrite, cf. src/engine/constants.ts LANGUE_IDS).
+ *
+ * Contrairement à une première version qui filtrait des LIGNES isolées, ce
+ * script extrait des FONCTIONS COMPLÈTES (plage de lignes exacte, choisie et
+ * relue à la main) : Terminal.svelte révèle une fonction ligne par ligne au
+ * fil des clics, puis insère une blague une fois la fonction terminée, avant
+ * d'en commencer une nouvelle (src/lib/terminalLines.ts, `nextTerminalLine`).
+ * Une fonction de 3 lignes se "tape" en 3 clics, une de 12 lignes en 12 —
+ * la borne ci-dessous (MAX_FUNCTION_LINES) existe pour qu'aucune fonction ne
+ * fasse traîner ce rythme en longueur.
  *
  * Usage : node scripts/fetch-code-samples.mjs (nécessite un accès réseau à
  * raw.githubusercontent.com). Pas branché en CI — à relancer manuellement si
- * on veut rafraîchir le pool (npm run fetch:code-samples).
+ * on veut ajouter/retirer une fonction (éditer FUNCTIONS ci-dessous), jamais
+ * en scannant automatiquement un fichier (on veut choisir et relire chaque
+ * fonction affichée aux joueurs, pas la découvrir a posteriori).
  */
 
+const MAX_FUNCTION_LINES = 12;
+
 const SOURCES = [
-  {
-    langue: "rust",
-    repo: "rust-lang/rust",
-    licence: "MIT OR Apache-2.0",
-    fichiers: [
-      "library/core/src/option.rs",
-      "library/core/src/result.rs",
-    ],
-  },
-  {
-    langue: "python",
-    repo: "django/django",
-    licence: "BSD-3-Clause",
-    fichiers: [
-      "django/utils/text.py",
-      "django/core/paginator.py",
-    ],
-  },
-  {
-    langue: "javascript",
-    repo: "facebook/react",
-    licence: "MIT",
-    fichiers: [
-      "packages/shared/shallowEqual.js",
-      "packages/react/src/ReactHooks.js",
-    ],
-  },
+  { langue: "rust", repo: "rust-lang/rust", licence: "MIT OR Apache-2.0" },
+  { langue: "python", repo: "django/django", licence: "BSD-3-Clause" },
+  { langue: "javascript", repo: "facebook/react", licence: "MIT" },
 ];
 
-const MAX_LINE_LEN = 76;
-const MIN_LINE_LEN = 6;
-const MAX_CODE_LINES_PER_FILE = 28;
-const MAX_COMMENT_LINES_PER_FILE = 8;
-
-const DROP_RE = /copyright|spdx|license|@flow|@providesmodule/i;
-const BRACE_ONLY_RE = /^[)\]}>;,:]+$/;
-// Commentaire "ligne de code" (///, //, #) — mais pas doc de module (//!,
-// trop nombreux et trop proses dans un fichier comme option.rs) ni attribut
-// Rust (#[...], filtré séparément).
-const COMMENT_RE = /^\s*(\/\/\/?(?!!)|#(?!\[))/;
-
-function extractLines(raw) {
-  const seen = new Set();
-  const code = [];
-  const comments = [];
-  for (const rawLine of raw.split("\n")) {
-    const line = rawLine.replace(/\s+$/u, "");
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.length < MIN_LINE_LEN) continue;
-    if (line.length > MAX_LINE_LEN) continue;
-    if (DROP_RE.test(trimmed)) continue;
-    if (BRACE_ONLY_RE.test(trimmed)) continue;
-    if (trimmed.includes("#[") || trimmed.startsWith("#![") || trimmed.startsWith("//!")) continue; // attributs Rust (même en milieu de ligne, y compris #![...]) / doc de module
-    if (/"\]\s*$/.test(trimmed)) continue; // suite probable d'un attribut multi-lignes (ex: #[must_use = "...\n...\"]`)
-    if (seen.has(line)) continue;
-    seen.add(line);
-    if (COMMENT_RE.test(trimmed)) {
-      if (comments.length < MAX_COMMENT_LINES_PER_FILE) comments.push(line);
-    } else if (code.length < MAX_CODE_LINES_PER_FILE) {
-      code.push(line);
-    }
-    if (code.length >= MAX_CODE_LINES_PER_FILE && comments.length >= MAX_COMMENT_LINES_PER_FILE) {
-      break;
-    }
-  }
-  return [...code, ...comments];
-}
+// Plages de lignes choisies et relues à la main (pas de scan automatique,
+// cf. commentaire de tête) — 1-indexé, bornes incluses, comme dans un éditeur.
+const FUNCTIONS = {
+  rust: [
+    { file: "library/core/src/option.rs", from: 682, to: 684 }, // is_none
+    { file: "library/core/src/option.rs", from: 742, to: 747 }, // as_ref
+    { file: "library/core/src/option.rs", from: 764, to: 769 }, // as_mut
+    { file: "library/core/src/result.rs", from: 647, to: 649 }, // is_err
+  ],
+  python: [
+    { file: "django/utils/text.py", from: 25, to: 31 }, // capfirst (+ décorateur)
+    { file: "django/core/paginator.py", from: 155, to: 166 }, // get_page
+    { file: "django/core/paginator.py", from: 132, to: 143 }, // _validate_number
+  ],
+  javascript: [
+    { file: "packages/react/src/ReactHooks.js", from: 53, to: 63 }, // useContext
+    { file: "packages/react/src/ReactHooks.js", from: 66, to: 71 }, // useState
+    { file: "packages/react/src/ReactHooks.js", from: 82, to: 85 }, // useRef
+    { file: "packages/react/src/ReactHooks.js", from: 183, to: 186 }, // useId
+  ],
+};
 
 async function fetchFile(repo, path) {
   const url = `https://raw.githubusercontent.com/${repo}/HEAD/${path}`;
@@ -86,36 +57,62 @@ async function fetchFile(repo, path) {
   return res.text();
 }
 
+function sliceFunction(raw, from, to, file) {
+  const lines = raw.split("\n");
+  const slice = lines.slice(from - 1, to).map((l) => l.replace(/\s+$/u, ""));
+  if (slice.length === 0 || slice.some((l) => l.length === 0)) {
+    throw new Error(`Plage vide ou ligne blanche dans ${file}:${from}-${to} — vérifier les numéros de ligne (le fichier source a peut-être changé).`);
+  }
+  if (slice.length > MAX_FUNCTION_LINES) {
+    throw new Error(`${file}:${from}-${to} fait ${slice.length} lignes > MAX_FUNCTION_LINES (${MAX_FUNCTION_LINES}).`);
+  }
+  return slice;
+}
+
 function tsStringLiteral(s) {
   return JSON.stringify(s);
 }
 
 async function main() {
+  const fileCache = new Map();
   const pools = {};
   const credits = [];
 
   for (const source of SOURCES) {
-    const lines = [];
-    for (const fichier of source.fichiers) {
-      const raw = await fetchFile(source.repo, fichier);
-      lines.push(...extractLines(raw));
+    const ranges = FUNCTIONS[source.langue];
+    const functions = [];
+    for (const range of ranges) {
+      const cacheKey = `${source.repo}/${range.file}`;
+      if (!fileCache.has(cacheKey)) {
+        fileCache.set(cacheKey, await fetchFile(source.repo, range.file));
+      }
+      functions.push(sliceFunction(fileCache.get(cacheKey), range.from, range.to, range.file));
     }
-    pools[source.langue] = lines;
-    credits.push(
-      `${source.langue} : ${source.repo} (${source.licence}) — ${source.fichiers.join(", ")}`,
-    );
-    console.log(`${source.langue}: ${lines.length} lignes retenues depuis ${source.repo}`);
+    pools[source.langue] = functions;
+    const files = [...new Set(ranges.map((r) => r.file))];
+    credits.push(`${source.langue} : ${source.repo} (${source.licence}) — ${files.join(", ")}`);
+    console.log(`${source.langue}: ${functions.length} fonctions (${functions.map((f) => f.length).join("+")} lignes) depuis ${source.repo}`);
   }
 
   const reactSource = SOURCES.find((s) => s.langue === "javascript");
 
+  const renderPool = (fns) =>
+    `[\n${fns.map((f) => `  [\n${f.map((l) => `    ${tsStringLiteral(l)},`).join("\n")}\n  ],`).join("\n")}\n]`;
+
   const body = `/**
- * Extraits de code réel, une source par archétype de langage (Grand Rewrite,
- * src/engine/constants.ts LANGUE_IDS). Généré par
- * scripts/fetch-code-samples.mjs — ne pas éditer à la main, relancer le
- * script pour rafraîchir. Mélangé aux blagues de terminalLines.ts dans
- * Terminal.svelte (visual-identity.md) pour donner au buffer l'air d'un vrai
- * projet, tout en gardant l'humour, différenciateur du jeu (PLAN.md §6).
+ * Fonctions réelles complètes, une source par archétype de langage (Grand
+ * Rewrite, src/engine/constants.ts LANGUE_IDS). Chaque entrée de
+ * CODE_SAMPLES est une fonction entière (tableau de lignes, dans l'ordre) —
+ * généré par scripts/fetch-code-samples.mjs à partir de plages de lignes
+ * choisies à la main, ne pas éditer ce fichier directement, relancer le
+ * script pour ajouter/retirer une fonction.
+ *
+ * Terminal.svelte révèle une fonction ligne par ligne au fil des clics
+ * "Écrire du code" (une fonction de N lignes = N clics), puis insère une
+ * blague de terminalLines.ts une fois la fonction terminée, avant d'en tirer
+ * une nouvelle au hasard (voir nextTerminalLine dans terminalLines.ts) — pour
+ * donner au buffer l'air d'un vrai projet tout en gardant l'humour,
+ * différenciateur du jeu (PLAN.md §6).
  *
  * Attribution (dépôts publics permissifs, cf. THIRD_PARTY_NOTICES.md) :
 ${credits.map((c) => ` * - ${c}`).join("\n")}
@@ -126,23 +123,17 @@ ${credits.map((c) => ` * - ${c}`).join("\n")}
  */
 import type { LangueId } from "../engine/constants";
 
-const RUST_CODE: readonly string[] = [
-${pools.rust.map((l) => `  ${tsStringLiteral(l)},`).join("\n")}
-];
+const RUST_FUNCTIONS: readonly (readonly string[])[] = ${renderPool(pools.rust)};
 
-const PYTHON_CODE: readonly string[] = [
-${pools.python.map((l) => `  ${tsStringLiteral(l)},`).join("\n")}
-];
+const PYTHON_FUNCTIONS: readonly (readonly string[])[] = ${renderPool(pools.python)};
 
-const JAVASCRIPT_CODE: readonly string[] = [
-${pools.javascript.map((l) => `  ${tsStringLiteral(l)},`).join("\n")}
-];
+const JAVASCRIPT_FUNCTIONS: readonly (readonly string[])[] = ${renderPool(pools.javascript)};
 
-export const CODE_SAMPLES: Record<LangueId, readonly string[]> = {
-  none: JAVASCRIPT_CODE,
-  rust: RUST_CODE,
-  python: PYTHON_CODE,
-  javascript: JAVASCRIPT_CODE,
+export const CODE_SAMPLES: Record<LangueId, readonly (readonly string[])[]> = {
+  none: JAVASCRIPT_FUNCTIONS,
+  rust: RUST_FUNCTIONS,
+  python: PYTHON_FUNCTIONS,
+  javascript: JAVASCRIPT_FUNCTIONS,
 };
 
 /** Attribution affichée en jeu (onglet README.md, cf. EditorView.svelte). */

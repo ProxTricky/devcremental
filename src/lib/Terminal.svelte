@@ -2,7 +2,7 @@
   import { untrack } from "svelte";
   import { gameStore } from "./gameStore.svelte";
   import { settings } from "./settings.svelte";
-  import { pickCodeLine } from "./terminalLines";
+  import { initialTerminalCursor, nextTerminalLine } from "./terminalLines";
 
   /** Faux terminal Acte I : chaque clic "Écrire du code" fait défiler une ligne
    * de code plausible (contenu placeholder, cf. terminalLines.ts). Premier
@@ -19,6 +19,13 @@
   let lines = $state<{ id: number; text: string; loc: number }[]>([]);
   let nextId = 0;
   let containerEl: HTMLDivElement | undefined = $state();
+  // État de la machine à 2 états de terminalLines.ts (fonction en cours de
+  // révélation / prochaine ligne = une blague) — un curseur par instance de
+  // terminal, jamais partagé, jamais réinitialisé en cours de run (une
+  // fonction commencée dans l'ancien langage finit de se révéler telle
+  // quelle si un Grand Rewrite change `langueActive` entre-temps ; la
+  // prochaine fonction tirée respectera le nouveau langage).
+  let cursor = initialTerminalCursor();
 
   $effect(() => {
     const count = gameStore.codeClickCount;
@@ -27,9 +34,11 @@
     // effet dépendant de sa propre écriture -> boucle infinie (Svelte 5, cf.
     // effect_update_depth_exceeded observé en test manuel).
     untrack(() => {
+      const result = nextTerminalLine(cursor, gameStore.state.langueActive);
+      cursor = result.cursor;
       lines.push({
         id: nextId++,
-        text: pickCodeLine(gameStore.state.langueActive),
+        text: result.text,
         // §4.1 : la valeur de locTotal AU MOMENT du push, jamais recalculée après.
         loc: gameStore.state.locTotal.round().toNumber(),
       });
