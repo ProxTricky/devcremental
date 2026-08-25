@@ -1,0 +1,257 @@
+/**
+ * Thème IDE sombre — identité visuelle centrale du jeu (CLAUDE.md) : le jeu EST
+ * un workbench d'éditeur, pas une UI décorée avec des artefacts de dev.
+ *
+ * Tokens et règles normatifs : docs/design/visual-identity.md révision 2
+ * (remplace intégralement la révision 1 — aucun alias de compatibilité).
+ */
+
+/* Polices auto-hébergées (§2.2) : sous-ensemble latin uniquement — le français
+   (accents + guillemets + œ) tient entièrement dans ce sous-ensemble.
+   (@import doit précéder toute autre règle CSS, y compris @font-face.) */
+@import "@fontsource/ibm-plex-sans/latin-400.css";
+@import "@fontsource/ibm-plex-sans/latin-600.css";
+
+/* @fontsource-variable/jetbrains-mono ne fournit pas de fichier "latin.css"
+   dédié (seulement wght.css, qui embarque aussi cyrillic/greek/vietnamese) :
+   @font-face manuel pour ne charger que le fichier latin (§2.2, budget 3
+   fichiers woff2 total avec les 2 graisses de Plex Sans). */
+@font-face {
+  font-family: "JetBrains Mono Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 800;
+  src: url("@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+:root {
+  /* §1.1 — surfaces, 4 niveaux non interchangeables */
+  --bg-app: #0b0e14;
+  --bg-panel: #0d111a;
+  --bg-frame: #11151f;
+  --bg-sunken: #080b11;
+
+  /* §1.2 — texte, 4 niveaux fermés */
+  --fg: #e6edf3;
+  --fg-2: rgba(230, 237, 243, 0.62);
+  --fg-3: rgba(230, 237, 243, 0.42);
+  --fg-4: rgba(230, 237, 243, 0.24);
+
+  /* §1.3 — filets */
+  --rule: rgba(255, 255, 255, 0.07);
+  --rule-strong: rgba(255, 255, 255, 0.12);
+
+  /* §1.4 — les 5 couleurs sémantiques */
+  --add: #7ee787;
+  --del: #f85149;
+  --warn: #e3b341;
+  --info: #58a6ff;
+  --meta: #d2a8ff;
+  --meta-deep: #a371f7;
+
+  /* §1.5 — 3 paliers d'alpha × 5 couleurs, 15 tokens dérivés mécaniquement */
+  --add-bg: rgba(126, 231, 135, 0.09);
+  --add-line: rgba(126, 231, 135, 0.24);
+  --add-line-hi: rgba(126, 231, 135, 0.42);
+  --del-bg: rgba(248, 81, 73, 0.09);
+  --del-line: rgba(248, 81, 73, 0.24);
+  --del-line-hi: rgba(248, 81, 73, 0.42);
+  --warn-bg: rgba(227, 179, 65, 0.09);
+  --warn-line: rgba(227, 179, 65, 0.24);
+  --warn-line-hi: rgba(227, 179, 65, 0.42);
+  --info-bg: rgba(88, 166, 255, 0.09);
+  --info-line: rgba(88, 166, 255, 0.24);
+  --info-line-hi: rgba(88, 166, 255, 0.42);
+  --meta-bg: rgba(210, 168, 255, 0.09);
+  --meta-line: rgba(210, 168, 255, 0.24);
+  --meta-line-hi: rgba(210, 168, 255, 0.42);
+
+  /* §3.2 — rayons, échelle fermée */
+  --r-0: 0;
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-full: 999px;
+
+  /* §2.1/§2.2 — deux polices, fallbacks déclarés */
+  --mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Consolas, monospace;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+
+  color-scheme: dark;
+  color: var(--fg);
+  background: var(--bg-app);
+  font: 400 15px/145% var(--sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Tous les nombres du jeu vivent en mono (§2.3) : tabular-nums est donc sûr à
+     poser une fois ici plutôt que répété sur chaque valeur qui bouge (§8.8). */
+  font-variant-numeric: tabular-nums;
+}
+
+/* §2.1 : ligatures désactivées sur toute la mono — la signature de la police,
+   pas du jeu. */
+.mono,
+[class*="mono"] {
+  font-variant-ligatures: none;
+}
+
+/* Accessibilité : respecte prefers-reduced-motion par défaut, en plus du
+   toggle explicite .reduce-motion piloté par src/lib/settings.svelte.ts.
+   Non négociable (CLAUDE.md) même sur un thème "hacker". Le caret du
+   terminal est l'exception volontaire : il reste allumé fixe (règle posée
+   dans Terminal.svelte), il n'est jamais supprimé (§4.3/§7).
+*/
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+h1,
+h2,
+h3,
+p,
+fieldset,
+legend {
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  font: inherit;
+}
+
+/* §8.1 : focus clavier visible partout, jamais d'outline: none. */
+:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+}
+
+/* §8.1 : anneau détaché sur --bg-app. */
+.on-bg-app:focus-visible {
+  box-shadow: 0 0 0 1px var(--bg-app);
+}
+
+/* En-tête de section (§2.3) : EXPLORER, OBJECTIFS, GÉNÉRATEURS, DETTE
+   TECHNIQUE, PROBLEMS, OUTPUT... */
+.section-title {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 9.5px;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--fg-3);
+}
+
+/* §3.10 — barres de progression : un seul composant visuel, utilisé partout. */
+.bar-track {
+  position: relative;
+  border-radius: var(--r-full);
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--r-full);
+  transition: width 200ms linear;
+}
+
+.bar-fill.add {
+  background: linear-gradient(90deg, rgba(88, 166, 255, 0.55), var(--info));
+}
+
+.bar-fill.meta {
+  background: linear-gradient(90deg, var(--meta-deep), var(--meta));
+}
+
+.bar-fill.debt {
+  background: linear-gradient(90deg, var(--warn), var(--del));
+}
+
+/* §1.6 — dégradé du bouton d'action primaire, seul emploi autorisé hors
+   barres/pastilles/modale. */
+.btn-primary {
+  background: linear-gradient(180deg, rgba(126, 231, 135, 0.16), rgba(126, 231, 135, 0.05));
+  border: 1px solid var(--add-line-hi);
+  color: var(--add);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn-primary:disabled {
+  cursor: not-allowed;
+  color: var(--fg-3);
+  background: none;
+  border-color: var(--rule);
+}
+
+/* §7 : flash de bordure au clic/achat — le seul feedback "récompense". */
+@keyframes flash-border {
+  0% {
+    border-color: var(--add-line);
+  }
+  40% {
+    border-color: var(--add-line-hi);
+  }
+  100% {
+    border-color: var(--add-line);
+  }
+}
+
+.flash-border {
+  animation: flash-border 140ms linear;
+}
+
+/* Lien d'évitement (§8.3) : premier élément focusable, "aller au jeu". */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 8px;
+  z-index: 100;
+  padding: 8px 12px;
+  background: var(--bg-frame);
+  color: var(--fg);
+  border: 1px solid var(--info-line-hi);
+  border-radius: var(--r-sm);
+  font-family: var(--sans);
+  font-size: 13px;
+}
+
+.skip-link:focus-visible {
+  top: 8px;
+}
