@@ -11,8 +11,6 @@ Rewrite, bugs) plutôt qu'un simple thème posé sur un clicker générique.
 - `PLAN.md` — plan de jeu complet et faisant autorité (concept, boucle de jeu,
   balancing, roadmap).
 - `CLAUDE.md` — résumé opérationnel pour les agents/contributeurs.
-- `docs/design/` — specs normatives par mécanique (Acte I, Dette Technique,
-  upgrades, progression offline, notation des nombres, identité visuelle).
 - `THIRD_PARTY_NOTICES.md` — attribution des extraits de code réel affichés
   dans le faux terminal (un dépôt public par archétype de langage).
 
