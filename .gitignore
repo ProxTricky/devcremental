@@ -11,7 +11,10 @@ node_modules
 dist
 dist-ssr
 *.local
-.claude/settings.local.json
+
+# Notes internes hors suivi git (restent en local, pas utiles au site)
+.claude/
+docs/
 
 # Editor directories and files
 .vscode/*
