@@ -12,6 +12,10 @@
   const flavor = $derived(GENERATOR_FLAVOR[settings.locale][id]);
   const label = $derived(GENERATOR_LABELS[settings.locale][id]);
   const effect = $derived(GENERATOR_EFFECT[settings.locale][id]);
+  /** Message de confirmation d'achat (gameStore.svelte.ts, décision user
+   * 2026-08-27) : remplace temporairement `effect` sur CETTE carte après un
+   * achat réussi, plutôt que d'apparaître dans le journal Output. */
+  const purchaseFlash = $derived(gameStore.purchaseFlash[id]);
 
   /** Glyphe de pastille par générateur — choix d'iconographie ui-engineer
    * (§3.8 ne fixe pas les 3 glyphes réels), cohérent avec le registre
@@ -48,7 +52,9 @@
         <span class="gen-owned mono">×{view.possedes}</span>
       </span>
       <p class="gen-flavor">{flavor.description}</p>
-      {#if effect}
+      {#if purchaseFlash}
+        <p class="gen-effect gen-flash">{purchaseFlash}</p>
+      {:else if effect}
         <p class="gen-effect">{effect}</p>
       {/if}
       <span class="gen-stats mono">
@@ -146,6 +152,13 @@
     font-size: 12px;
     line-height: 1.4;
     color: var(--info);
+  }
+
+  /* Confirmation d'achat temporaire (gameStore.purchaseFlash) : couleur --add
+     pour la distinguer de la description d'effet statique (--info). */
+  .gen-effect.gen-flash {
+    color: var(--add);
+    font-weight: 500;
   }
 
   .gen-stats {

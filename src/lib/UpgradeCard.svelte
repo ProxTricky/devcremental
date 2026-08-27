@@ -14,6 +14,10 @@
   const label = $derived(UPGRADE_LABELS[settings.locale][id]);
   const effect = $derived(UPGRADE_EFFECT[settings.locale][id]);
   const t = $derived(UI_STRINGS[settings.locale].upgradeCard);
+  /** Message de confirmation d'achat (gameStore.svelte.ts, décision user
+   * 2026-08-27) : remplace temporairement `effect` sur CETTE carte après un
+   * achat réussi, plutôt que d'apparaître dans le journal Output. */
+  const purchaseFlash = $derived(gameStore.purchaseFlash[id]);
 
   /** Glyphe de pastille par upgrade — même registre géométrique que les
    * icônes de générateurs (GeneratorCard) et d'activity bar, choix
@@ -54,7 +58,11 @@
         {/if}
       </span>
       <p class="up-flavor">{flavor.description}</p>
-      <p class="up-effect">{effect}</p>
+      {#if purchaseFlash}
+        <p class="up-effect up-flash">{purchaseFlash}</p>
+      {:else}
+        <p class="up-effect">{effect}</p>
+      {/if}
       {#if !view.owned}
         <span class="up-stats mono">
           <span class="up-cost">{formatNumber(view.cost, settings.numberNotation)} LoC</span>
@@ -160,6 +168,13 @@
     font-size: 12px;
     line-height: 1.4;
     color: var(--info);
+  }
+
+  /* Confirmation d'achat temporaire (gameStore.purchaseFlash) : couleur --add
+     pour la distinguer de la description d'effet statique (--info). */
+  .up-effect.up-flash {
+    color: var(--add);
+    font-weight: 500;
   }
 
   .up-stats {

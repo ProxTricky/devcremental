@@ -24,6 +24,11 @@
   const label = $derived(NPM_INSTALL_LABEL[settings.locale]);
   const effect = $derived(NPM_INSTALL_EFFECT[settings.locale]);
   const t = $derived(UI_STRINGS[settings.locale].npmInstallClaim);
+  /** Message de confirmation d'achat (gameStore.svelte.ts, décision user
+   * 2026-08-27) : remplace temporairement `effect` sur cette carte après un
+   * claim réussi, plutôt que d'apparaître dans le journal Output. Clé fixe
+   * "npmInstall" (instance unique, pas de GeneratorId/UpgradeId ici). */
+  const purchaseFlash = $derived(gameStore.purchaseFlash.npmInstall);
 
   let flashing = $state(false);
   function onClaim() {
@@ -55,7 +60,11 @@
         {/if}
       </span>
       <p class="npm-flavor">{flavor.description}</p>
-      <p class="npm-effect">{effect}</p>
+      {#if purchaseFlash}
+        <p class="npm-effect npm-flash">{purchaseFlash}</p>
+      {:else}
+        <p class="npm-effect">{effect}</p>
+      {/if}
       <span class="npm-stats mono">
         <span class="npm-gain">+{gainLoc} LoC</span>
         <span class="npm-cost">+{costDette} dette</span>
@@ -159,6 +168,13 @@
     font-size: 12px;
     line-height: 1.4;
     color: var(--info);
+  }
+
+  /* Confirmation d'achat temporaire (gameStore.purchaseFlash) : couleur --add
+     pour la distinguer de la description d'effet statique (--info). */
+  .npm-effect.npm-flash {
+    color: var(--add);
+    font-weight: 500;
   }
 
   /* Gain (+LoC) en --add, coût (+dette) en --del : les deux moitiés du choix

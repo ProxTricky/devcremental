@@ -42,6 +42,11 @@ export const AUTOSAVE_INTERVAL_MS = 30_000;
 /** Fréquence de rafraîchissement de `clockNow` (§3.9 : compte à rebours
  * autosave, temps de run) — horloge UI, indépendante du tick worker 10/s. */
 const CLOCK_INTERVAL_MS = 1_000;
+/** Durée d'affichage du message de confirmation d'achat directement sur la
+ * carte concernée (décision user, 2026-08-27 — remplace l'affichage dans le
+ * journal Output) : assez long pour lire une phrase courte, assez court pour
+ * ne pas masquer durablement l'effet statique de la carte. */
+const PURCHASE_FLASH_DURATION_MS = 4_000;
 
 /** OUTPUT du panneau bas (visual-identity.md §3.7d) : uniquement des événements
  * réellement observés (autosave effective, transition d'acte, Grand Rewrite,
@@ -112,6 +117,12 @@ class GameStore {
   clockNow = $state(Date.now());
 
   eventLog = $state<LogEntry[]>([]);
+  /** Message de confirmation d'achat affiché directement sur la carte
+   * concernée (clé = GeneratorId, UpgradeId, ou littéral "npmInstall" — les
+   * trois espaces de noms ne se recoupent jamais), pas dans le journal Output
+   * (décision user, 2026-08-27). S'efface tout seul après
+   * `PURCHASE_FLASH_DURATION_MS`, cf. `#flashPurchase`. */
+  purchaseFlash = $state<Record<string, string>>({});
   #logId = 0;
   #initialized = false;
 
@@ -187,12 +198,29 @@ class GameStore {
   }
 
   /**
+   * Affiche `text` directement sur la carte `key` (GeneratorId, UpgradeId, ou
+   * "npmInstall") pendant `PURCHASE_FLASH_DURATION_MS`, puis l'efface — sauf
+   * si un achat plus récent sur la même carte a déjà remplacé ce texte entre
+   * temps (comparaison de référence avant suppression, pour ne pas effacer un
+   * flash plus récent avec le timer d'un flash plus ancien).
+   */
+  #flashPurchase(key: string, text: string): void {
+    this.purchaseFlash[key] = text;
+    setTimeout(() => {
+      if (this.purchaseFlash[key] === text) {
+        delete this.purchaseFlash[key];
+      }
+    }, PURCHASE_FLASH_DURATION_MS);
+  }
+
+  /**
    * Message de confirmation d'achat (acte-1-solo-dev.md §1.6, upgrades-acte-1-2.md
    * §7) : construit le texte localisé/formaté à partir des données brutes du
    * `PurchaseResult` reçu du Worker (voir protocol.ts pour pourquoi le texte
    * n'est jamais construit côté Worker) — jamais appelé sur un no-op, le Worker
    * ne poste ce message qu'après avoir constaté un changement d'état réel
-   * (gameWorker.ts, comparaison de référence).
+   * (gameWorker.ts, comparaison de référence). Affiché directement sur la
+   * carte concernée (décision user, 2026-08-27), plus dans le journal Output.
    */
   #pushPurchaseLog(result: PurchaseResult): void {
     const locale = settings.locale;
@@ -209,9 +237,12 @@ class GameStore {
         const debitApres = formatNumber(generatorRate(result.id, result.possedes), notation);
         if (result.id === "rubberDuck") {
           const fix = formatNumber(new Decimal(rubberDuckFixRate(result.possedes)), notation);
-          this.#pushLog(strings.generatorWithFix(nom, result.possedes, debitAvant, debitApres, fix));
+          this.#flashPurchase(
+            result.id,
+            strings.generatorWithFix(nom, result.possedes, debitAvant, debitApres, fix),
+          );
         } else {
-          this.#pushLog(strings.generator(nom, result.possedes, debitAvant, debitApres));
+          this.#flashPurchase(result.id, strings.generator(nom, result.possedes, debitAvant, debitApres));
         }
         break;
       }
@@ -220,7 +251,7 @@ class GameStore {
         switch (result.id) {
           case "autoComplete": {
             const valeur = formatNumber(new Decimal(AUTO_COMPLETE_TAUX), notation);
-            this.#pushLog(strings.autoComplete(nom, valeur));
+            this.#flashPurchase(result.id, strings.autoComplete(nom, valeur));
             break;
           }
           case "worksOnMyMachine": {
@@ -233,12 +264,13 @@ class GameStore {
             // qui reproduit les valeurs normatives 40/80, pas le texte littéral.
             const seuilAvant = Math.round((1 - BUG_PLANCHER) / IMPACT_BUG);
             const seuilApres = Math.round((1 - BUG_PLANCHER) / impactBugEffectif(true));
-            this.#pushLog(strings.worksOnMyMachine(nom, seuilApres, seuilAvant));
+            this.#flashPurchase(result.id, strings.worksOnMyMachine(nom, seuilApres, seuilAvant));
             break;
           }
           case "testsAutomatises": {
             const pourcentage = Math.round((1 - TESTS_AUTO_MULT_COEF_DETTE) * 100);
-            this.#pushLog(
+            this.#flashPurchase(
+              result.id,
               result.acteAtPurchase === 1
                 ? strings.testsAutomatisesDormant(nom, pourcentage)
                 : strings.testsAutomatisesActif(nom, pourcentage),
@@ -252,7 +284,7 @@ class GameStore {
         const nom = NPM_INSTALL_LABEL[locale];
         const gain = formatNumber(new Decimal(NPM_INSTALL_BURST_LOC), notation);
         const cout = formatNumber(new Decimal(NPM_INSTALL_BURST_DETTE), notation);
-        this.#pushLog(strings.npmInstall(nom, gain, cout));
+        this.#flashPurchase("npmInstall", strings.npmInstall(nom, gain, cout));
         break;
       }
     }
