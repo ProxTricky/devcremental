@@ -134,27 +134,22 @@ export const UI_STRINGS = {
       gameReset: "partie réinitialisée",
     },
     /**
-     * Message de confirmation d'achat (acte-1-solo-dev.md §1.6, amendé par
-     * upgrades-acte-1-2.md §7) — texte mécanique informationnel écrit
-     * directement par game-designer (décision explicite, §8 du second
-     * document) : PAS de la flavor, ne jamais reformuler/améliorer.
-     * `en` ci-dessous en est la traduction fidèle par content-writer (même
-     * contrat que `fr`/`en` ailleurs dans ce fichier, sauf que la formulation
-     * française elle-même n'est pas de content-writer — cf. §8 :
-     * "content-writer en fournit la traduction anglaise, pas la formulation
-     * française").
+     * Message de confirmation d'achat (upgrades-acte-1-2.md §7) — texte
+     * mécanique informationnel écrit directement par game-designer (décision
+     * explicite, §8 du document) : PAS de la flavor, ne jamais
+     * reformuler/améliorer. `en` ci-dessous en est la traduction fidèle par
+     * content-writer (même contrat que `fr`/`en` ailleurs dans ce fichier,
+     * sauf que la formulation française elle-même n'est pas de
+     * content-writer — cf. §8 : "content-writer en fournit la traduction
+     * anglaise, pas la formulation française").
+     *
+     * Ne couvre plus les générateurs depuis le 2026-08-27 (2ᵉ révision,
+     * décision user) : ceux-ci affichent un aperçu "avant → après" permanent
+     * directement dans GeneratorCard.svelte (pas une phrase localisée, juste
+     * des nombres — voir gameStore.svelte.ts `GeneratorView.nextProduction`),
+     * les anciens gabarits `generator`/`generatorWithFix` sont donc supprimés.
      */
     purchaseLog: {
-      generator: (nom: string, n: number, debitAvant: string, debitApres: string) =>
-        `${nom} ×${n} acheté — production : ${debitAvant} → ${debitApres} LoC/s`,
-      generatorWithFix: (
-        nom: string,
-        n: number,
-        debitAvant: string,
-        debitApres: string,
-        fix: string,
-      ) =>
-        `${nom} ×${n} acheté — production : ${debitAvant} → ${debitApres} LoC/s, correction : ${fix} bugs/s`,
       autoComplete: (nom: string, valeur: string) =>
         `${nom} achetée — +${valeur} LoC/s en continu`,
       worksOnMyMachine: (nom: string, seuilApres: number, seuilAvant: number) =>
@@ -278,16 +273,6 @@ export const UI_STRINGS = {
     // ci-dessus) — texte mécanique informationnel, pas de la flavor : toute
     // reformulation doit repartir de la version française de game-designer.
     purchaseLog: {
-      generator: (nom: string, n: number, debitAvant: string, debitApres: string) =>
-        `${nom} ×${n} purchased — production: ${debitAvant} → ${debitApres} LoC/s`,
-      generatorWithFix: (
-        nom: string,
-        n: number,
-        debitAvant: string,
-        debitApres: string,
-        fix: string,
-      ) =>
-        `${nom} ×${n} purchased — production: ${debitAvant} → ${debitApres} LoC/s, fixing: ${fix} bugs/s`,
       autoComplete: (nom: string, valeur: string) =>
         `${nom} purchased — +${valeur} LoC/s continuously`,
       worksOnMyMachine: (nom: string, seuilApres: number, seuilAvant: number) =>

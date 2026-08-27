@@ -7,7 +7,7 @@ import {
   NPM_INSTALL_BURST_LOC,
   TESTS_AUTO_MULT_COEF_DETTE,
 } from "../engine/constants";
-import { generatorRate, impactBugEffectif, rubberDuckFixRate } from "../engine/formulas";
+import { impactBugEffectif } from "../engine/formulas";
 import type { InboundMessage, OutboundMessage, PurchaseResult } from "../worker/protocol";
 import { UI_STRINGS } from "./uiStrings";
 
@@ -19,8 +19,12 @@ import { UI_STRINGS } from "./uiStrings";
  * le contrat de référence dont elle dépend).
  *
  * Affiché directement sur la carte concernée via `gameStore.purchaseFlash`
- * (clé = GeneratorId/UpgradeId, ou littéral "npmInstall"), plus dans le
- * journal `eventLog` (décision user, 2026-08-27 — cf. gameStore.svelte.ts).
+ * (clé = UpgradeId, ou littéral "npmInstall"), jamais dans le journal
+ * `eventLog` (décision user, 2026-08-27 — cf. gameStore.svelte.ts). Les
+ * générateurs ne passent plus par ce mécanisme depuis la 2ᵉ révision du même
+ * jour : ils affichent un aperçu "avant → après" permanent sur la carte
+ * (`GeneratorView.nextProduction`/`nextFixRate`), testé séparément dans
+ * gameStore.generatorPreview.test.ts.
  *
  * Même convention de mock que gameStore.offline.test.ts (Worker/localStorage
  * absents de l'environnement de test Node de ce projet) : voir ce fichier pour
@@ -89,30 +93,6 @@ afterEach(() => {
 });
 
 const S = UI_STRINGS.en.purchaseLog; // placeholder identique à fr, cf. en-tête
-
-describe("critère §4.19 — message générateur générique", () => {
-  it("copierColler ×3 : gabarit générique, débit = generatorRate(id, 3)", async () => {
-    const { mod, worker } = await freshGameStore();
-    send(worker, { kind: "generator", id: "copierColler", possedes: 3 });
-    const flash = mod.gameStore.purchaseFlash.copierColler;
-    const debitAvant = generatorRate("copierColler", 2).toFixed(0);
-    const debitApres = generatorRate("copierColler", 3).toFixed(0);
-    expect(flash).toBe(S.generator("Stack Overflow Copy-Paste", 3, debitAvant, debitApres));
-  });
-});
-
-describe("critère §4.19 — message rubberDuck (variante avec correction)", () => {
-  it("rubberDuck ×2 : gabarit avec {fix}, jamais le gabarit générique", async () => {
-    const { mod, worker } = await freshGameStore();
-    send(worker, { kind: "generator", id: "rubberDuck", possedes: 2 });
-    const flash = mod.gameStore.purchaseFlash.rubberDuck;
-    const debitAvant = generatorRate("rubberDuck", 1).toFixed(0);
-    const debitApres = generatorRate("rubberDuck", 2).toFixed(0);
-    const fix = rubberDuckFixRate(2).toFixed(0);
-    expect(flash).toBe(S.generatorWithFix("Rubber Duck", 2, debitAvant, debitApres, fix));
-    expect(flash).not.toBe(S.generator("Rubber Duck", 2, debitAvant, debitApres));
-  });
-});
 
 describe("critère §7.5.15 — message U1 Auto-complétion", () => {
   it("valeur dérivée d'AUTO_COMPLETE_TAUX, jamais codée en dur dans le test au-delà de la constante elle-même", async () => {
@@ -183,8 +163,17 @@ describe("critère §4.20/§7.5.20 — silence sur no-op", () => {
 describe("carte, pas journal (décision user, 2026-08-27)", () => {
   it("un achat réussi n'ajoute rien à eventLog, uniquement à purchaseFlash", async () => {
     const { mod, worker } = await freshGameStore();
+    send(worker, { kind: "upgrade", id: "autoComplete", acteAtPurchase: 1 });
+    expect(mod.gameStore.eventLog).toHaveLength(0);
+    expect(mod.gameStore.purchaseFlash.autoComplete).toBeDefined();
+  });
+});
+
+describe("générateur : plus de purchaseFlash (décision user, 2026-08-27, 2ᵉ révision)", () => {
+  it("un purchaseResult de type générateur n'écrit ni dans purchaseFlash ni dans eventLog", async () => {
+    const { mod, worker } = await freshGameStore();
     send(worker, { kind: "generator", id: "copierColler", possedes: 1 });
     expect(mod.gameStore.eventLog).toHaveLength(0);
-    expect(mod.gameStore.purchaseFlash.copierColler).toBeDefined();
+    expect(mod.gameStore.purchaseFlash.copierColler).toBeUndefined();
   });
 });

@@ -24,7 +24,6 @@ import {
 import { createInitialState } from "../engine/state";
 import type { GameState } from "../engine/types";
 import { formatNumber } from "./format";
-import { GENERATOR_LABELS } from "./generatorLabels";
 import { NPM_INSTALL_LABEL, UPGRADE_LABELS } from "./upgradeLabels";
 import {
   computeOfflineDeltaSeconds,
@@ -67,6 +66,16 @@ export interface GeneratorView {
   possedes: number;
   cost: Decimal;
   production: Decimal;
+  /** Débit si le joueur achète UNE unité de plus (`generatorRate(id, possedes +
+   * 1)`) — affiché en permanence sur la carte (décision user, 2026-08-27,
+   * remplace le message de confirmation temporaire pour les générateurs) :
+   * l'aperçu "avant → après" doit inciter à l'achat, donc être visible AVANT
+   * de cliquer, pas seulement après. */
+  nextProduction: Decimal;
+  /** Débit de correction passive, avant/après un achat de plus — `null` pour
+   * tout générateur sans effet secondaire (seul `rubberDuck` en a un, §3.4). */
+  fixRate: Decimal | null;
+  nextFixRate: Decimal | null;
   unlocked: boolean;
   affordable: boolean;
 }
@@ -118,10 +127,12 @@ class GameStore {
 
   eventLog = $state<LogEntry[]>([]);
   /** Message de confirmation d'achat affiché directement sur la carte
-   * concernée (clé = GeneratorId, UpgradeId, ou littéral "npmInstall" — les
-   * trois espaces de noms ne se recoupent jamais), pas dans le journal Output
-   * (décision user, 2026-08-27). S'efface tout seul après
-   * `PURCHASE_FLASH_DURATION_MS`, cf. `#flashPurchase`. */
+   * concernée (clé = UpgradeId, ou littéral "npmInstall" — les deux espaces de
+   * noms ne se recoupent jamais), pas dans le journal Output (décision user,
+   * 2026-08-27). S'efface tout seul après `PURCHASE_FLASH_DURATION_MS`, cf.
+   * `#flashPurchase`. N'a plus de clé de type GeneratorId depuis le
+   * 2026-08-27 (2ᵉ révision) : les générateurs affichent un aperçu permanent
+   * à la place, cf. `GeneratorView.nextProduction`. */
   purchaseFlash = $state<Record<string, string>>({});
   #logId = 0;
   #initialized = false;
@@ -214,13 +225,22 @@ class GameStore {
   }
 
   /**
-   * Message de confirmation d'achat (acte-1-solo-dev.md §1.6, upgrades-acte-1-2.md
-   * §7) : construit le texte localisé/formaté à partir des données brutes du
-   * `PurchaseResult` reçu du Worker (voir protocol.ts pour pourquoi le texte
-   * n'est jamais construit côté Worker) — jamais appelé sur un no-op, le Worker
-   * ne poste ce message qu'après avoir constaté un changement d'état réel
-   * (gameWorker.ts, comparaison de référence). Affiché directement sur la
-   * carte concernée (décision user, 2026-08-27), plus dans le journal Output.
+   * Message de confirmation d'achat (upgrades-acte-1-2.md §7) : construit le
+   * texte localisé/formaté à partir des données brutes du `PurchaseResult`
+   * reçu du Worker (voir protocol.ts pour pourquoi le texte n'est jamais
+   * construit côté Worker) — jamais appelé sur un no-op, le Worker ne poste ce
+   * message qu'après avoir constaté un changement d'état réel (gameWorker.ts,
+   * comparaison de référence). Affiché directement sur la carte concernée.
+   *
+   * Ne traite plus `result.kind === "generator"` (décision user, 2026-08-27,
+   * amende acte-1-solo-dev.md §1.6) : les générateurs affichent désormais un
+   * aperçu "avant → après" **permanent** sur la carte (`GeneratorView.
+   * nextProduction`/`nextFixRate`, cf. `generatorView` ci-dessous et
+   * GeneratorCard.svelte), pas une confirmation temporaire après achat — le
+   * but est d'inciter à l'achat en montrant le gain AVANT de cliquer, pas de
+   * confirmer après coup. Le Worker continue de poster `purchaseResult` pour
+   * les générateurs (gameWorker.ts, inchangé) ; ce cas tombe simplement dans
+   * le `default` implicite du switch ci-dessous, sans effet.
    */
   #pushPurchaseLog(result: PurchaseResult): void {
     const locale = settings.locale;
@@ -228,24 +248,6 @@ class GameStore {
     const strings = UI_STRINGS[locale].purchaseLog;
 
     switch (result.kind) {
-      case "generator": {
-        const nom = GENERATOR_LABELS[locale][result.id];
-        // Achat = toujours +1 unité en Acte I (cf. acte-1-solo-dev.md §1.6) :
-        // le débit "avant" se déduit de la quantité déjà possédée après achat,
-        // sans donnée supplémentaire à faire remonter du Worker.
-        const debitAvant = formatNumber(generatorRate(result.id, result.possedes - 1), notation);
-        const debitApres = formatNumber(generatorRate(result.id, result.possedes), notation);
-        if (result.id === "rubberDuck") {
-          const fix = formatNumber(new Decimal(rubberDuckFixRate(result.possedes)), notation);
-          this.#flashPurchase(
-            result.id,
-            strings.generatorWithFix(nom, result.possedes, debitAvant, debitApres, fix),
-          );
-        } else {
-          this.#flashPurchase(result.id, strings.generator(nom, result.possedes, debitAvant, debitApres));
-        }
-        break;
-      }
       case "upgrade": {
         const nom = UPGRADE_LABELS[locale][result.id];
         switch (result.id) {
@@ -400,11 +402,15 @@ class GameStore {
   generatorView(id: GeneratorId): GeneratorView {
     const possedes = this.state.generators[id];
     const cost = generatorCost(id, possedes);
+    const isDuck = id === "rubberDuck";
     return {
       id,
       possedes,
       cost,
       production: generatorRate(id, possedes),
+      nextProduction: generatorRate(id, possedes + 1),
+      fixRate: isDuck ? new Decimal(rubberDuckFixRate(possedes)) : null,
+      nextFixRate: isDuck ? new Decimal(rubberDuckFixRate(possedes + 1)) : null,
       unlocked: isUnlocked(id, this.state.locTotal),
       affordable: this.state.loc.gte(cost),
     };
