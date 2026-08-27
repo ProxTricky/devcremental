@@ -1,6 +1,12 @@
-import type Decimal from "break_eternity.js";
+import Decimal from "break_eternity.js";
 import {
+  AUTO_COMPLETE_TAUX,
+  BUG_PLANCHER,
   GENERATOR_IDS,
+  IMPACT_BUG,
+  NPM_INSTALL_BURST_DETTE,
+  NPM_INSTALL_BURST_LOC,
+  TESTS_AUTO_MULT_COEF_DETTE,
   type GeneratorId,
   type LangueId,
   type UpgradeId,
@@ -8,13 +14,18 @@ import {
 import {
   generatorCost,
   generatorRate,
+  impactBugEffectif,
   isUnlocked,
   isUpgradeUnlocked,
+  rubberDuckFixRate,
   unlockThreshold,
   upgradeCost,
 } from "../engine/formulas";
 import { createInitialState } from "../engine/state";
 import type { GameState } from "../engine/types";
+import { formatNumber } from "./format";
+import { GENERATOR_LABELS } from "./generatorLabels";
+import { NPM_INSTALL_LABEL, UPGRADE_LABELS } from "./upgradeLabels";
 import {
   computeOfflineDeltaSeconds,
   loadFromLocalStorage,
@@ -23,7 +34,7 @@ import {
   saveToLocalStorage,
 } from "../save/localStorage";
 import { decodeSave, encodeSave, SAVE_KEY } from "../save/save";
-import type { InboundMessage, OutboundMessage } from "../worker/protocol";
+import type { InboundMessage, OutboundMessage, PurchaseResult } from "../worker/protocol";
 import { settings } from "./settings.svelte";
 import { UI_STRINGS } from "./uiStrings";
 
@@ -175,6 +186,74 @@ class GameStore {
     }
   }
 
+  /**
+   * Message de confirmation d'achat (acte-1-solo-dev.md §1.6, upgrades-acte-1-2.md
+   * §7) : construit le texte localisé/formaté à partir des données brutes du
+   * `PurchaseResult` reçu du Worker (voir protocol.ts pour pourquoi le texte
+   * n'est jamais construit côté Worker) — jamais appelé sur un no-op, le Worker
+   * ne poste ce message qu'après avoir constaté un changement d'état réel
+   * (gameWorker.ts, comparaison de référence).
+   */
+  #pushPurchaseLog(result: PurchaseResult): void {
+    const locale = settings.locale;
+    const notation = settings.numberNotation;
+    const strings = UI_STRINGS[locale].purchaseLog;
+
+    switch (result.kind) {
+      case "generator": {
+        const nom = GENERATOR_LABELS[locale][result.id];
+        const debit = formatNumber(generatorRate(result.id, result.possedes), notation);
+        if (result.id === "rubberDuck") {
+          const fix = formatNumber(new Decimal(rubberDuckFixRate(result.possedes)), notation);
+          this.#pushLog(strings.generatorWithFix(nom, result.possedes, debit, fix));
+        } else {
+          this.#pushLog(strings.generator(nom, result.possedes, debit));
+        }
+        break;
+      }
+      case "upgrade": {
+        const nom = UPGRADE_LABELS[locale][result.id];
+        switch (result.id) {
+          case "autoComplete": {
+            const valeur = formatNumber(new Decimal(AUTO_COMPLETE_TAUX), notation);
+            this.#pushLog(strings.autoComplete(nom, valeur));
+            break;
+          }
+          case "worksOnMyMachine": {
+            // upgrades-acte-1-2.md §7.2 énonce littéralement "1 / IMPACT_BUG"
+            // mais ses propres exemples chiffrés (40 avant, 80 après) ne
+            // correspondent qu'à la formule du plancher telle que dérivée par
+            // acte-1-solo-dev.md §3.3 : bugs_actifs au plancher = (1 -
+            // BUG_PLANCHER) / impact_bug (`1 - impact_bug × bugs = plancher`).
+            // 1 / IMPACT_BUG donnerait 50, pas 40 — on implémente la formule
+            // qui reproduit les valeurs normatives 40/80, pas le texte littéral.
+            const seuilAvant = Math.round((1 - BUG_PLANCHER) / IMPACT_BUG);
+            const seuilApres = Math.round((1 - BUG_PLANCHER) / impactBugEffectif(true));
+            this.#pushLog(strings.worksOnMyMachine(nom, seuilApres, seuilAvant));
+            break;
+          }
+          case "testsAutomatises": {
+            const pourcentage = Math.round((1 - TESTS_AUTO_MULT_COEF_DETTE) * 100);
+            this.#pushLog(
+              result.acteAtPurchase === 1
+                ? strings.testsAutomatisesDormant(nom, pourcentage)
+                : strings.testsAutomatisesActif(nom, pourcentage),
+            );
+            break;
+          }
+        }
+        break;
+      }
+      case "npmInstall": {
+        const nom = NPM_INSTALL_LABEL[locale];
+        const gain = formatNumber(new Decimal(NPM_INSTALL_BURST_LOC), notation);
+        const cout = formatNumber(new Decimal(NPM_INSTALL_BURST_DETTE), notation);
+        this.#pushLog(strings.npmInstall(nom, gain, cout));
+        break;
+      }
+    }
+  }
+
   #handleMessage(msg: OutboundMessage): void {
     switch (msg.type) {
       case "state":
@@ -188,6 +267,9 @@ class GameStore {
         saveLastActiveAt();
         this.lastAutosaveAt = Date.now();
         this.#pushLog(UI_STRINGS[settings.locale].gameStore.saveDone);
+        break;
+      case "purchaseResult":
+        this.#pushPurchaseLog(msg);
         break;
       case "loadError":
         // Sauvegarde locale corrompue/illisible : on continue sur l'état courant

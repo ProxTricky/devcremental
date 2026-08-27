@@ -1,6 +1,12 @@
 import Decimal from "break_eternity.js";
 import { describe, expect, it } from "vitest";
-import { GENERATOR_IDS, GENERATORS, TICK_DT, type GeneratorId } from "./constants";
+import {
+  GENERATOR_IDS,
+  GENERATORS,
+  RUBBER_DUCK_FIX_RATE,
+  TICK_DT,
+  type GeneratorId,
+} from "./constants";
 import {
   bugMultiplier,
   clickProduction,
@@ -31,10 +37,11 @@ describe("generatorCost — §4.1", () => {
 });
 
 describe("generatorRate — §4.2 (débit, jamais mis à l'échelle par dt ici)", () => {
+  // Valeurs recalibrées 2026-08-27 (acte-1-solo-dev.md §1.3, changelog).
   const cases: [GeneratorId, number][] = [
-    ["copierColler", 0.1],
-    ["stagiaire", 0.7],
-    ["rubberDuck", 5.0],
+    ["copierColler", 1.0],
+    ["stagiaire", 5.0],
+    ["rubberDuck", 35.0],
   ];
 
   for (const [id, prodBase] of cases) {
@@ -49,7 +56,9 @@ describe("generatorRate — §4.2 (débit, jamais mis à l'échelle par dt ici)"
 describe("Mise à l'échelle du débit générateur au tick — Finding A (non-régression) — §4.3", () => {
   it("k unités, dt=0.1s, sur un tick isolé : gain = k × prod_base × dt exactement ; cumulé sur 10 ticks (1s) : k × prod_base, jamais × 10", () => {
     const k = 10;
-    const prodBase = GENERATORS.copierColler.prodBase; // 0.1
+    // Lu depuis la constante (pas codé en dur) : reste valide quel que soit un
+    // futur recalibrage de prodBase (cf. acte-1-solo-dev.md, changelog 2026-08-27).
+    const prodBase = GENERATORS.copierColler.prodBase;
     const tauxGenerateursBrute = generatorRate("copierColler", k);
 
     const gainUnTick = tauxGenerateursBrute.mul(TICK_DT);
@@ -59,7 +68,7 @@ describe("Mise à l'échelle du débit générateur au tick — Finding A (non-r
     for (let i = 0; i < 10; i++) {
       cumule = cumule.add(tauxGenerateursBrute.mul(TICK_DT));
     }
-    expect(cumule.toNumber()).toBeCloseTo(k * prodBase, 10); // 1.0, jamais 10.0
+    expect(cumule.toNumber()).toBeCloseTo(k * prodBase, 10); // le débit annoncé, jamais ×10
   });
 });
 
@@ -85,9 +94,9 @@ describe("bugMultiplier — §4.8 (plancher à 40 bugs)", () => {
   });
 });
 
-describe("rubberDuckFixRate — §3.4/§3.5 étape 6 (Finding B : 0.05 -> 0.5)", () => {
-  it("taux_correction_duck = possedes × 0.5 (débit, LoC/s ; dt appliqué dans tick.ts, pas ici)", () => {
-    expect(rubberDuckFixRate(2)).toBeCloseTo(1.0, 10);
+describe("rubberDuckFixRate — §3.4/§3.5 étape 6 (Finding B : 0.05 -> 0.5, recalibré 0.5 -> 3.5 le 2026-08-27)", () => {
+  it("taux_correction_duck = possedes × RUBBER_DUCK_FIX_RATE (débit, LoC/s ; dt appliqué dans tick.ts, pas ici)", () => {
+    expect(rubberDuckFixRate(2)).toBeCloseTo(2 * RUBBER_DUCK_FIX_RATE, 10);
     expect(rubberDuckFixRate(0)).toBe(0);
   });
 });

@@ -13,6 +13,7 @@ import {
   archetypeProdMultiplier,
   archetypeStaticMultipliers,
   generatorCost,
+  generatorRate,
   karmaGagne,
   locNetteTickAvecDette,
 } from "./formulas";
@@ -59,9 +60,11 @@ describe("critère §9.2 — accumulation exacte", () => {
       acte: 2,
       generators: { copierColler: 10, stagiaire: 0, rubberDuck: 0 },
     };
-    // taux_generateurs_brute = 10 × 0.1 = 1 LoC/s ; loc_brute_tick = 1 × dt = 0.1
+    // taux_generateurs_brute = 10 × prod_base ; loc_brute_tick = taux × dt
     // (aucun clic, langue='none' => mult_prod_loc_tick = 1, aucune modification).
-    const locBruteTick = 0.1;
+    // prodBase lu via generatorRate (pas codé en dur) : reste valide après le
+    // recalibrage 2026-08-27 (acte-1-solo-dev.md §1.3).
+    const locBruteTick = generatorRate("copierColler", 10).toNumber() * TICK_DT;
     const after = tickState(state, TICK_DT, EMPTY_TICK_INPUT);
     expect(after.dette.sub(state.dette).toNumber()).toBeCloseTo(locBruteTick * 0.15, 10);
   });
@@ -170,11 +173,12 @@ describe("critère §9.8 — refactoring ne bloque pas les générateurs", () =>
 
     // Les deux diminuent (la réduction du refactor domine), mais celle avec
     // générateurs diminue moins : la différence est exactement l'accumulation
-    // causée par les générateurs sur ce tick (loc_brute_tick=0.1 × 0.15).
+    // causée par les générateurs sur ce tick (loc_brute_tick × 0.15).
     expect(afterWith.dette.lt(base.dette)).toBe(true);
     expect(afterWithout.dette.lt(base.dette)).toBe(true);
     const diff = afterWith.dette.sub(afterWithout.dette).toNumber();
-    expect(diff).toBeCloseTo(0.1 * 0.15, 10);
+    const locBruteTick = generatorRate("copierColler", 10).toNumber() * TICK_DT;
+    expect(diff).toBeCloseTo(locBruteTick * 0.15, 10);
     expect(afterWith.loc.gt(0)).toBe(true); // la production de LoC continue aussi
   });
 });
@@ -375,7 +379,7 @@ describe("critère §9.17 — tick de transition Acte I → Acte II (non-régres
 
     // Tick suivant : acte=2 déjà posé en entrée => l'accumulation reprend, exactement
     // loc_brute_tick × coef_dette_acte (mêmes générateurs, langue 'none' => mult=1).
-    const locBruteTickSuivant = 10 * 0.1 * TICK_DT; // taux_generateurs_brute × dt = 0.1
+    const locBruteTickSuivant = generatorRate("copierColler", 10).toNumber() * TICK_DT; // taux_generateurs_brute × dt
     const after = tickState(atCrossing, TICK_DT, EMPTY_TICK_INPUT);
     expect(after.dette.toNumber()).toBeGreaterThan(0);
     expect(after.dette.toNumber()).toBeCloseTo(locBruteTickSuivant * COEF_DETTE_ACTE, 10);

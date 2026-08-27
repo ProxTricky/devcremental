@@ -1,6 +1,6 @@
 import Decimal from "break_eternity.js";
 import { describe, expect, it } from "vitest";
-import { CAFE_MAX_STOCK, TICK_DT } from "./constants";
+import { CAFE_MAX_STOCK, GENERATORS, TAUX_BUG, TICK_DT } from "./constants";
 import { generatorRate, rubberDuckFixRate } from "./formulas";
 import { grandRewrite } from "./actions";
 import { createInitialState } from "./state";
@@ -23,30 +23,36 @@ function runTicks(state: GameState, n: number, getInput: () => TickInput = () =>
 }
 
 describe("Mise à l'échelle du débit générateur au tick — Finding A (non-régression historique) — §4.3", () => {
-  it("10 Copier-coller Stack Overflow (prod_base=0.1), 10 ticks (1s réelle), aucun autre effet : la part générateur du gain de LoC vaut exactement 1.0, jamais 10.0", () => {
+  it("10 Copier-coller Stack Overflow, 10 ticks (1s réelle), aucun autre effet : la part générateur du gain de LoC vaut exactement k × prod_base, jamais ×10", () => {
     // Réf. balance-qa 2026-08-04 : le pipeline appliquait `dt` au Rubber Duck et
     // au clic mais jamais aux générateurs, un facteur ~10× de surproduction.
     // Test au niveau formule (taux_generateurs_brute × dt), indépendant de toute
     // pénalité de bugs, pour vérifier la conversion débit -> quantité de tick
     // isolément — c'est exactement l'étape 3 du pipeline (tick.ts) qui avait
-    // sauté cette multiplication.
-    const tauxGenerateursBrute = generatorRate("copierColler", 10); // 10 × 0.1 = 1.0 LoC/s
+    // sauté cette multiplication. `prodBase` lu depuis la constante (pas codé en
+    // dur) : reste valide après le recalibrage 2026-08-27 (acte-1-solo-dev.md).
+    const k = 10;
+    const prodBase = GENERATORS.copierColler.prodBase;
+    const tauxGenerateursBrute = generatorRate("copierColler", k);
     let totalBruteSur10Ticks = new Decimal(0);
     for (let i = 0; i < 10; i++) {
       totalBruteSur10Ticks = totalBruteSur10Ticks.add(tauxGenerateursBrute.mul(TICK_DT));
     }
-    expect(totalBruteSur10Ticks.toNumber()).toBeCloseTo(1.0, 10);
-    expect(totalBruteSur10Ticks.toNumber()).not.toBeCloseTo(10.0, 0);
+    expect(totalBruteSur10Ticks.toNumber()).toBeCloseTo(k * prodBase, 10);
+    expect(totalBruteSur10Ticks.toNumber()).not.toBeCloseTo(k * prodBase * 10, 0);
   });
 
-  it("via le pipeline complet (tickState) : le gain de LoC net sur 10 ticks reste au voisinage de 1.0, jamais de 10.0", () => {
+  it("via le pipeline complet (tickState) : le gain de LoC net sur 10 ticks reste au voisinage du débit annoncé, jamais ×10", () => {
     // Garde-fou d'intégration : contrairement au test ci-dessus (formule pure),
     // celui-ci passe par tickState et aurait donc détecté le Finding A même s'il
     // n'avait vécu QUE dans le câblage de tick.ts (générateur jamais multiplié
     // par dt avant d'être ajouté à loc_brute_tick), pas dans formulas.ts.
+    // 1 unité à prod_base=1.0 (recalibré 2026-08-27) reproduit exactement le même
+    // débit total (1.0 LoC/s) que l'ancien "10 unités à prod_base=0.1" : bornes
+    // de tolérance inchangées.
     const state: GameState = {
       ...createInitialState(),
-      generators: { copierColler: 10, stagiaire: 0, rubberDuck: 0 },
+      generators: { copierColler: 1, stagiaire: 0, rubberDuck: 0 },
     };
     const after = runTicks(state, 10);
     // Légèrement sous 1.0 (pénalité de bugs générés par cette même production,
@@ -139,13 +145,15 @@ describe("Bugs — génération sur loc_brute_tick, jamais loc_nette_tick — §
       locTotal: new Decimal(1),
       generators: { copierColler: 10, stagiaire: 0, rubberDuck: 0 },
     };
-    // taux_generateurs_brute = 10 * 0.1 = 1 LoC/s (débit) ; converti en quantité
-    // de CE tick via × dt (étape 3, Finding A) : loc_brute_tick = 1 * 0.1 = 0.1.
+    // taux_generateurs_brute = 10 × prod_base (débit) ; converti en quantité de
+    // CE tick via × dt (étape 3, Finding A) : loc_brute_tick = taux × dt.
     // bugs=0 initial => pas de pénalité sur ce tick (qui utiliserait de toute
     // façon loc_nette_tick seulement pour LoC, jamais pour la génération de bugs).
-    // TAUX_BUG recalibré 0.05 -> 0.02 (2026-08-25).
+    // TAUX_BUG recalibré 0.05 -> 0.02 (2026-08-25). prodBase lu depuis la
+    // constante : reste valide après le recalibrage 2026-08-27.
+    const locBruteTick = generatorRate("copierColler", 10).toNumber() * TICK_DT;
     const after = tickState(state, TICK_DT, EMPTY_TICK_INPUT);
-    expect(after.bugs).toBeCloseTo(0.1 * 0.02, 10);
+    expect(after.bugs).toBeCloseTo(locBruteTick * TAUX_BUG, 10);
   });
 });
 
@@ -196,18 +204,21 @@ describe("Rubber Duck — correction passive, wiring dans le pipeline — §4.11
       generators: { copierColler: 0, stagiaire: 0, rubberDuck: 3 },
     };
     const after = tickState(state, TICK_DT, EMPTY_TICK_INPUT);
-    const tauxGenerateursBrute = 3 * 5.0;
+    // prod_base_duck/RUBBER_DUCK_FIX_RATE lus via les fonctions de formulas.ts
+    // (pas codés en dur) : reste valide après le recalibrage 2026-08-27
+    // (acte-1-solo-dev.md — prod_base_duck 5.0 -> 35.0, RUBBER_DUCK_FIX_RATE
+    // 0.5 -> 3.5).
+    const tauxGenerateursBrute = generatorRate("rubberDuck", 3).toNumber();
     // Débit converti en quantité de CE tick (étape 3, Finding A) avant d'être
     // utilisé pour générer des bugs (étape 5).
     const locBruteTick = tauxGenerateursBrute * TICK_DT;
     // TAUX_BUG recalibré 0.05 -> 0.02 (2026-08-25).
-    const expectedGeneration = locBruteTick * 0.02;
-    // RUBBER_DUCK_FIX_RATE recalibré 0.05 -> 0.5 (Finding B).
-    const expectedCorrection = 3 * 0.5 * TICK_DT;
+    const expectedGeneration = locBruteTick * TAUX_BUG;
+    const expectedCorrection = rubberDuckFixRate(3) * TICK_DT;
     expect(after.bugs).toBeCloseTo(10 + expectedGeneration - expectedCorrection, 10);
   });
 
-  it("cumulée sur 100 ticks (10s), la correction vaut k × 0.5 × 10 malgré l'arrondi par tick", () => {
+  it("cumulée sur 100 ticks (10s), la correction vaut rubberDuckFixRate(k) × 10 malgré l'arrondi par tick", () => {
     // Le pipeline complet ne peut pas être "net décroissant" pour un Rubber Duck
     // seul (il produit aussi des LoC, donc génère des bugs, via prod_base) : ce
     // que §4.11 vérifie précisément est ce TAUX de correction, cumulé tick par
@@ -217,10 +228,10 @@ describe("Rubber Duck — correction passive, wiring dans le pipeline — §4.11
     for (let i = 0; i < 100; i++) {
       cumulativeCorrection += rubberDuckFixRate(k) * TICK_DT;
     }
-    expect(cumulativeCorrection).toBeCloseTo(k * 0.5 * 10, 10);
+    expect(cumulativeCorrection).toBeCloseTo(rubberDuckFixRate(k) * 10, 10);
   });
 
-  it("critère §4.13 (Finding B, recalibré 2026-08-25) : seuls des Rubber Ducks possédés, bugs_actifs diminue net de k × 0.4 bug/s", () => {
+  it("critère §4.13 (Finding B, recalibré 2026-08-27) : seuls des Rubber Ducks possédés, bugs_actifs diminue net de k × (RUBBER_DUCK_FIX_RATE − prod_base_duck × taux_bug) bug/s", () => {
     const k = 5;
     const state: GameState = {
       ...createInitialState(),
@@ -234,9 +245,12 @@ describe("Rubber Duck — correction passive, wiring dans le pipeline — §4.11
     };
     const after = runTicks(state, 100); // 100 * TICK_DT = 10s
     // Bilan net : k × (RUBBER_DUCK_FIX_RATE − prod_base_duck × taux_bug)
-    // = 5 × (0.5 − 5.0 × 0.02) = 5 × (0.5 − 0.1) = 5 × 0.4 = 2.0 bug/s, sur 10s
-    // = 20. Valait k × 0.25 × 10 = 12.5 avec l'ancien TAUX_BUG=0.05.
-    expect(state.bugs - after.bugs).toBeCloseTo(k * 0.4 * 10, 6);
+    // = 5 × (3.5 − 35.0 × 0.02) = 5 × (3.5 − 0.7) = 5 × 2.8 = 14 bug/s, sur 10s
+    // = 140 (valait k × 0.4 × 10 = 20 avant le recalibrage 2026-08-27, cf.
+    // acte-1-solo-dev.md §3.4).
+    const netRatePerSecond =
+      rubberDuckFixRate(k) - generatorRate("rubberDuck", k).toNumber() * TAUX_BUG;
+    expect(state.bugs - after.bugs).toBeCloseTo(netRatePerSecond * 10, 6);
   });
 });
 

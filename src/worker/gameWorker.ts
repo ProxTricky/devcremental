@@ -64,9 +64,19 @@ self.onmessage = (event: MessageEvent<InboundMessage>) => {
     case "drinkCoffee":
       pending.drinkCoffee = true;
       break;
-    case "buyGenerator":
+    case "buyGenerator": {
+      // Détection de succès (acte-1-solo-dev.md §1.6) : buyGenerator (actions.ts)
+      // renvoie `state` INCHANGÉ (même référence) sur un no-op (solde
+      // insuffisant) — comparer la référence avant/après évite de dupliquer les
+      // gardes déjà présentes dans actions.ts, et c'est synchrone (aucune race
+      // avec les diffusions périodiques "state" du `loop` ci-dessus).
+      const before = state;
       state = buyGenerator(state, msg.id);
+      if (state !== before) {
+        post({ type: "purchaseResult", kind: "generator", id: msg.id, possedes: state.generators[msg.id] });
+      }
       break;
+    }
     case "refactorStart":
       state = setRefactorActif(state, true);
       break;
@@ -76,12 +86,26 @@ self.onmessage = (event: MessageEvent<InboundMessage>) => {
     case "grandRewrite":
       state = grandRewrite(state, msg.langue);
       break;
-    case "buyUpgrade":
+    case "buyUpgrade": {
+      // Même détection que "buyGenerator" ci-dessus (référence inchangée = no-op,
+      // buyUpgrade/actions.ts). `acteAtPurchase` = `before.acte` : upgrades-acte-1-2.md
+      // §7.3 exige la variante U3 selon l'acte AU MOMENT DE L'ACHAT, jamais l'acte
+      // après (buyUpgrade ne modifie jamais `acte` de toute façon).
+      const before = state;
       state = buyUpgrade(state, msg.id);
+      if (state !== before) {
+        post({ type: "purchaseResult", kind: "upgrade", id: msg.id, acteAtPurchase: before.acte });
+      }
       break;
-    case "claimNpmInstall":
+    }
+    case "claimNpmInstall": {
+      const before = state;
       state = claimNpmInstall(state);
+      if (state !== before) {
+        post({ type: "purchaseResult", kind: "npmInstall" });
+      }
       break;
+    }
     case "loadSave":
       try {
         state = decodeSave(msg.encoded);

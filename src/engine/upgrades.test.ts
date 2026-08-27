@@ -199,8 +199,10 @@ describe("critère §6.7 — U3 effet", () => {
       upgrades: { ...createInitialState().upgrades, testsAutomatises: true },
       generators: { copierColler: 10, stagiaire: 0, rubberDuck: 0 },
     };
-    // taux_generateurs_brute = 10 × 0.1 = 1 LoC/s ; loc_brute_tick = 1 × dt = 0.1
-    const locBruteTick = 0.1;
+    // taux_generateurs_brute = 10 × prod_base ; loc_brute_tick = taux × dt.
+    // prodBase lu via generatorRate (pas codé en dur) : reste valide après le
+    // recalibrage 2026-08-27 (acte-1-solo-dev.md §1.3).
+    const locBruteTick = generatorRate("copierColler", 10).toNumber() * TICK_DT;
     const after = tickState(state, TICK_DT, EMPTY_TICK_INPUT);
     expect(after.dette.sub(state.dette).toNumber()).toBeCloseTo(
       locBruteTick * COEF_DETTE_ACTE * TESTS_AUTO_MULT_COEF_DETTE,
@@ -216,7 +218,8 @@ describe("critère §6.7 — U3 effet", () => {
       upgrades: { ...createInitialState().upgrades, testsAutomatises: true },
       generators: { copierColler: 10, stagiaire: 0, rubberDuck: 0 },
     };
-    const locBruteTick = 10 * 0.1 * TICK_DT * 0.8; // taux_generateurs_brute × dt × mult_prod_loc_tick(rust)
+    // taux_generateurs_brute × dt × mult_prod_loc_tick(rust)
+    const locBruteTick = generatorRate("copierColler", 10).toNumber() * TICK_DT * 0.8;
     const after = tickState(state, TICK_DT, EMPTY_TICK_INPUT);
     expect(after.dette.sub(state.dette).toNumber()).toBeCloseTo(
       locBruteTick * COEF_DETTE_ACTE * 0.5 * TESTS_AUTO_MULT_COEF_DETTE,

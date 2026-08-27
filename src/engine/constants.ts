@@ -19,14 +19,27 @@ export const GENERATOR_IDS: GeneratorId[] = [
 /** Spec §1.1 : cout(n) = cout_base × taux_croissance^n, commun aux 3 générateurs. */
 export const GROWTH_RATE = 1.15;
 
-/** Spec §1.3 — table des paramètres nommés des 3 générateurs. */
+/**
+ * Spec §1.3 — table des paramètres nommés des 3 générateurs.
+ * Recalibré le 2026-08-27 (retour de playtest Reddit — "Stack Overflow
+ * copy-paste... as far as I can tell, it does nothing" — décision produit,
+ * cf. changelog en tête d'acte-1-solo-dev.md) : `copierColler.coutBase` reste
+ * inchangé à `10` (borné par PLAN.md §8 "1er générateur < 30s", pas de raison
+ * de le remonter) ; `prodBase` ×10 (0.1 -> 1.0) pour rendre le gain lisible
+ * (+1 LoC/s = un incrément visible chaque seconde). `stagiaire.coutBase` ×7.14
+ * (100 -> 700) et `prodBase` ×7.14 (0.7 -> 5.0) pour préserver son ratio
+ * production/coût. `rubberDuck.coutBase` ×7 (1000 -> 7000) et `prodBase` ×7
+ * (5.0 -> 35.0), même ratio production/coût qu'avant (Finding C : sans ce
+ * recalibrage `stagiaire` serait devenu strictement dominant en production
+ * pure pour un dixième du prix du canard).
+ */
 export const GENERATORS: Record<
   GeneratorId,
   { coutBase: number; prodBase: number }
 > = {
-  copierColler: { coutBase: 10, prodBase: 0.1 },
-  stagiaire: { coutBase: 100, prodBase: 0.7 },
-  rubberDuck: { coutBase: 1000, prodBase: 5.0 },
+  copierColler: { coutBase: 10, prodBase: 1.0 },
+  stagiaire: { coutBase: 700, prodBase: 5.0 },
+  rubberDuck: { coutBase: 7000, prodBase: 35.0 },
 };
 
 /** Spec §2, note sous la table de balancing : seuil de visibilité = 0.5 × cout_base. */
@@ -63,10 +76,20 @@ export const BUG_PLANCHER = 0.2; // multiplicateur minimal (jamais de mur mort)
  * — contraire à son intention narrative (§0 : "il fait deux jobs et le fait
  * bien"). Depuis le recalibrage TAUX_BUG=0.02 (2026-08-25), sa propre génération
  * tombe à 0.1/s/unité (5.0 × 0.02) donc son net correcteur passe à 0.4/s/unité
- * (0.5 − 0.1) — RUBBER_DUCK_FIX_RATE lui-même reste inchangé, seule la
- * dérivation change (cf. spec §3.4).
+ * (0.5 − 0.1) — RUBBER_DUCK_FIX_RATE lui-même restait inchangé à ce moment-là,
+ * seule la dérivation changeait (cf. spec §3.4).
+ * Recalibré une seconde fois, 0.5 -> 3.5 (×7, 2026-08-27, changelog
+ * acte-1-solo-dev.md) : le recalibrage `prod_base_duck` 5.0 -> 35.0 (même date,
+ * voir GENERATORS ci-dessus) fait remonter sa propre génération de bugs à
+ * 0.7/s/unité (35.0 × 0.02) — sans ajuster RUBBER_DUCK_FIX_RATE dans les mêmes
+ * proportions, le canard serait redevenu net générateur de bugs (0.5 − 0.7 =
+ * −0.2), reproduisant Finding B une seconde fois. Règle de conception retenue à
+ * partir de ce recalibrage (spec §3.4) : RUBBER_DUCK_FIX_RATE doit toujours être
+ * dérivé comme `5 × prod_base_duck × taux_bug`, jamais fixé indépendamment —
+ * marge de 5× (le net correcteur, 2.8/s/unité, cf. dérivé ci-dessous) préservée
+ * à travers ce second recalibrage.
  */
-export const RUBBER_DUCK_FIX_RATE = 0.5; // bugs corrigés / s / unité possédée
+export const RUBBER_DUCK_FIX_RATE = 3.5; // bugs corrigés / s / unité possédée
 
 /**
  * Contrat de transition Acte I -> Acte II, docs/design/acte-2-open-source.md §1-2.

@@ -27,7 +27,25 @@ export type InboundMessage =
   | { type: "buyUpgrade"; id: UpgradeId }
   | { type: "claimNpmInstall" };
 
+/**
+ * Acte-1-solo-dev.md §1.6 / upgrades-acte-1-2.md §7 : message de confirmation
+ * d'achat. Émis par le Worker en réponse directe et synchrone à un
+ * "buyGenerator"/"buyUpgrade"/"claimNpmInstall" qui a réellement modifié l'état
+ * (jamais sur un no-op) — voir gameWorker.ts pour la détection (comparaison de
+ * référence avec l'état avant traitement du message, actions.ts renvoyant
+ * `state` inchangé tel quel sur un no-op). Ne transporte que des données brutes
+ * (id, quantité, acte au moment de l'achat) : le texte lui-même (locale,
+ * formatage des nombres via `settings.numberNotation`) se construit côté thread
+ * principal (gameStore.svelte.ts), qui seul connaît ces préférences d'affichage
+ * — le Worker n'en a jamais besoin pour le reste de son travail.
+ */
+export type PurchaseResult =
+  | { kind: "generator"; id: GeneratorId; possedes: number }
+  | { kind: "upgrade"; id: UpgradeId; acteAtPurchase: number }
+  | { kind: "npmInstall" };
+
 export type OutboundMessage =
   | { type: "state"; save: string }
   | { type: "saveData"; encoded: string }
-  | { type: "loadError"; message: string };
+  | { type: "loadError"; message: string }
+  | ({ type: "purchaseResult" } & PurchaseResult);

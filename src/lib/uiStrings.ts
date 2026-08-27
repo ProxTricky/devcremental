@@ -133,6 +133,33 @@ export const UI_STRINGS = {
       grandRewriteLog: (langue: string) => `grand rewrite — nouvelle run en ${langue}`,
       gameReset: "partie réinitialisée",
     },
+    /**
+     * Message de confirmation d'achat (acte-1-solo-dev.md §1.6, amendé par
+     * upgrades-acte-1-2.md §7) — texte mécanique informationnel écrit
+     * directement par game-designer (décision explicite, §8 du second
+     * document) : PAS de la flavor, ne jamais reformuler/améliorer.
+     * `en` ci-dessous en est la traduction fidèle par content-writer (même
+     * contrat que `fr`/`en` ailleurs dans ce fichier, sauf que la formulation
+     * française elle-même n'est pas de content-writer — cf. §8 :
+     * "content-writer en fournit la traduction anglaise, pas la formulation
+     * française").
+     */
+    purchaseLog: {
+      generator: (nom: string, n: number, debit: string) =>
+        `${nom} ×${n} acheté — production totale : ${debit} LoC/s`,
+      generatorWithFix: (nom: string, n: number, debit: string, fix: string) =>
+        `${nom} ×${n} acheté — production totale : ${debit} LoC/s, correction : ${fix} bugs/s`,
+      autoComplete: (nom: string, valeur: string) =>
+        `${nom} achetée — +${valeur} LoC/s en continu`,
+      worksOnMyMachine: (nom: string, seuilApres: number, seuilAvant: number) =>
+        `${nom} achetée — pénalité des bugs réduite de moitié : le plancher de production n'est plus atteint qu'à partir de ${seuilApres} bugs actifs (au lieu de ${seuilAvant})`,
+      testsAutomatisesDormant: (nom: string, pourcentage: number) =>
+        `${nom} achetée — ralentira l'accumulation de dette technique de ${pourcentage}% une fois l'Acte II commencé (aucun effet tant que la dette n'est pas active)`,
+      testsAutomatisesActif: (nom: string, pourcentage: number) =>
+        `${nom} achetée — accumulation de dette technique ralentie de ${pourcentage}% dès maintenant`,
+      npmInstall: (nom: string, gain: string, cout: string) =>
+        `${nom} réclamé — +${gain} LoC immédiates, +${cout} dette technique`,
+    },
   },
   en: {
     skipLink: "skip to game",
@@ -240,6 +267,25 @@ export const UI_STRINGS = {
       loadErrorPrefix: "failed to load save: ",
       grandRewriteLog: (langue: string) => `grand rewrite — new run in ${langue}`,
       gameReset: "game reset",
+    },
+    // Traduction fidèle des gabarits `fr.purchaseLog` (voir le commentaire
+    // ci-dessus) — texte mécanique informationnel, pas de la flavor : toute
+    // reformulation doit repartir de la version française de game-designer.
+    purchaseLog: {
+      generator: (nom: string, n: number, debit: string) =>
+        `${nom} ×${n} purchased — total production: ${debit} LoC/s`,
+      generatorWithFix: (nom: string, n: number, debit: string, fix: string) =>
+        `${nom} ×${n} purchased — total production: ${debit} LoC/s, fixing: ${fix} bugs/s`,
+      autoComplete: (nom: string, valeur: string) =>
+        `${nom} purchased — +${valeur} LoC/s continuously`,
+      worksOnMyMachine: (nom: string, seuilApres: number, seuilAvant: number) =>
+        `${nom} purchased — bug penalty halved: the production floor is now only reached from ${seuilApres} active bugs onwards (instead of ${seuilAvant})`,
+      testsAutomatisesDormant: (nom: string, pourcentage: number) =>
+        `${nom} purchased — will slow technical debt accumulation by ${pourcentage}% once Act II has begun (no effect while debt is inactive)`,
+      testsAutomatisesActif: (nom: string, pourcentage: number) =>
+        `${nom} purchased — technical debt accumulation slowed by ${pourcentage}% from now on`,
+      npmInstall: (nom: string, gain: string, cout: string) =>
+        `${nom} claimed — +${gain} LoC immediately, +${cout} technical debt`,
     },
   },
 } as const satisfies Record<Locale, unknown>;
