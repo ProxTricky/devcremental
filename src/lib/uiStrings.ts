@@ -145,10 +145,16 @@ export const UI_STRINGS = {
      * française").
      */
     purchaseLog: {
-      generator: (nom: string, n: number, debit: string) =>
-        `${nom} ×${n} acheté — production totale : ${debit} LoC/s`,
-      generatorWithFix: (nom: string, n: number, debit: string, fix: string) =>
-        `${nom} ×${n} acheté — production totale : ${debit} LoC/s, correction : ${fix} bugs/s`,
+      generator: (nom: string, n: number, debitAvant: string, debitApres: string) =>
+        `${nom} ×${n} acheté — production : ${debitAvant} → ${debitApres} LoC/s`,
+      generatorWithFix: (
+        nom: string,
+        n: number,
+        debitAvant: string,
+        debitApres: string,
+        fix: string,
+      ) =>
+        `${nom} ×${n} acheté — production : ${debitAvant} → ${debitApres} LoC/s, correction : ${fix} bugs/s`,
       autoComplete: (nom: string, valeur: string) =>
         `${nom} achetée — +${valeur} LoC/s en continu`,
       worksOnMyMachine: (nom: string, seuilApres: number, seuilAvant: number) =>
@@ -272,10 +278,16 @@ export const UI_STRINGS = {
     // ci-dessus) — texte mécanique informationnel, pas de la flavor : toute
     // reformulation doit repartir de la version française de game-designer.
     purchaseLog: {
-      generator: (nom: string, n: number, debit: string) =>
-        `${nom} ×${n} purchased — total production: ${debit} LoC/s`,
-      generatorWithFix: (nom: string, n: number, debit: string, fix: string) =>
-        `${nom} ×${n} purchased — total production: ${debit} LoC/s, fixing: ${fix} bugs/s`,
+      generator: (nom: string, n: number, debitAvant: string, debitApres: string) =>
+        `${nom} ×${n} purchased — production: ${debitAvant} → ${debitApres} LoC/s`,
+      generatorWithFix: (
+        nom: string,
+        n: number,
+        debitAvant: string,
+        debitApres: string,
+        fix: string,
+      ) =>
+        `${nom} ×${n} purchased — production: ${debitAvant} → ${debitApres} LoC/s, fixing: ${fix} bugs/s`,
       autoComplete: (nom: string, valeur: string) =>
         `${nom} purchased — +${valeur} LoC/s continuously`,
       worksOnMyMachine: (nom: string, seuilApres: number, seuilAvant: number) =>

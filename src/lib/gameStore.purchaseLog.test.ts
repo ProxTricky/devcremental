@@ -91,8 +91,9 @@ describe("critère §4.19 — message générateur générique", () => {
     const { mod, worker } = await freshGameStore();
     send(worker, { kind: "generator", id: "copierColler", possedes: 3 });
     const last = mod.gameStore.eventLog.at(-1)!;
-    const debit = generatorRate("copierColler", 3).toFixed(0);
-    expect(last.text).toBe(S.generator("Stack Overflow Copy-Paste", 3, debit));
+    const debitAvant = generatorRate("copierColler", 2).toFixed(0);
+    const debitApres = generatorRate("copierColler", 3).toFixed(0);
+    expect(last.text).toBe(S.generator("Stack Overflow Copy-Paste", 3, debitAvant, debitApres));
   });
 });
 
@@ -101,10 +102,11 @@ describe("critère §4.19 — message rubberDuck (variante avec correction)", ()
     const { mod, worker } = await freshGameStore();
     send(worker, { kind: "generator", id: "rubberDuck", possedes: 2 });
     const last = mod.gameStore.eventLog.at(-1)!;
-    const debit = generatorRate("rubberDuck", 2).toFixed(0);
+    const debitAvant = generatorRate("rubberDuck", 1).toFixed(0);
+    const debitApres = generatorRate("rubberDuck", 2).toFixed(0);
     const fix = rubberDuckFixRate(2).toFixed(0);
-    expect(last.text).toBe(S.generatorWithFix("Rubber Duck", 2, debit, fix));
-    expect(last.text).not.toBe(S.generator("Rubber Duck", 2, debit));
+    expect(last.text).toBe(S.generatorWithFix("Rubber Duck", 2, debitAvant, debitApres, fix));
+    expect(last.text).not.toBe(S.generator("Rubber Duck", 2, debitAvant, debitApres));
   });
 });
 

@@ -202,12 +202,16 @@ class GameStore {
     switch (result.kind) {
       case "generator": {
         const nom = GENERATOR_LABELS[locale][result.id];
-        const debit = formatNumber(generatorRate(result.id, result.possedes), notation);
+        // Achat = toujours +1 unité en Acte I (cf. acte-1-solo-dev.md §1.6) :
+        // le débit "avant" se déduit de la quantité déjà possédée après achat,
+        // sans donnée supplémentaire à faire remonter du Worker.
+        const debitAvant = formatNumber(generatorRate(result.id, result.possedes - 1), notation);
+        const debitApres = formatNumber(generatorRate(result.id, result.possedes), notation);
         if (result.id === "rubberDuck") {
           const fix = formatNumber(new Decimal(rubberDuckFixRate(result.possedes)), notation);
-          this.#pushLog(strings.generatorWithFix(nom, result.possedes, debit, fix));
+          this.#pushLog(strings.generatorWithFix(nom, result.possedes, debitAvant, debitApres, fix));
         } else {
-          this.#pushLog(strings.generator(nom, result.possedes, debit));
+          this.#pushLog(strings.generator(nom, result.possedes, debitAvant, debitApres));
         }
         break;
       }
